@@ -7,7 +7,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)](https://www.typescriptlang.org/)
 [![Chrome](https://img.shields.io/badge/Chrome-120+-green.svg)](https://www.google.com/chrome/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/Vulpecula-Studio/88code-smart-reset/pulls)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/JackLFH/88code-smart-reset/pulls)
 
 [功能特性](#-功能特性) • [快速安装](#-快速安装) • [使用指南](#-使用指南) • [开发文档](#-开发文档)
 
@@ -45,7 +45,7 @@
 #### 步骤 1：克隆仓库
 
 ```bash
-git clone https://github.com/Vulpecula-Studio/88code-smart-reset.git
+git clone https://github.com/JackLFH/88code-smart-reset.git
 cd 88code-smart-reset
 ```
 
@@ -76,7 +76,7 @@ npm run build
 
 **适用于**：普通用户，快速安装
 
-1. 前往 [Releases 页面](https://github.com/Vulpecula-Studio/88code-smart-reset/releases)
+1. 前往 [Releases 页面](https://github.com/JackLFH/88code-smart-reset/releases)
 2. 下载最新版本的 `88code-smart-reset-vX.X.X.zip`
 3. 解压 ZIP 文件
 4. 按照上面"方法 1 - 步骤 4"加载到 Chrome
@@ -342,7 +342,7 @@ MIT License - 详见 [LICENSE](./LICENSE) 文件
 
 **Half open flowers**
 - Email: 1816524875@qq.com
-- GitHub: [@Vulpecula-Studio](https://github.com/Vulpecula-Studio)
+- GitHub: [@JackLFH](https://github.com/JackLFH)
 
 ---
 
@@ -354,7 +354,8 @@ MIT License - 详见 [LICENSE](./LICENSE) 文件
 
 ## 🙏 致谢
 
-感谢所有为本项目提供建议和反馈的用户！
+- 感谢 [@Vulpecula-Studio](https://github.com/Vulpecula-Studio) 的项目提供的灵感和参考
+- 感谢所有为本项目提供建议和反馈的用户！
 
 ---
 
