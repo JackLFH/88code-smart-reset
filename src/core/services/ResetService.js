@@ -51,24 +51,17 @@ export class ResetService {
                 await Logger.warning('RESET_SKIPPED', result.summary, account.id);
                 return this.finalizeResult(result);
             }
-            // 【调试】输出所有订阅的原始数据
+            // 输出订阅摘要信息
             await Logger.info('DEBUG_SUBSCRIPTIONS', `获取到 ${subscriptions.length} 个订阅，开始分析...`, account.id);
-            for (let i = 0; i < subscriptions.length; i += 1) {
-                const sub = subscriptions[i];
-                if (sub) {
-                    await Logger.info('DEBUG_SUB', `订阅 ${i + 1}: Plan=${sub.subscriptionPlan}, Status=${sub.status}, ResetCount=${sub.resetCount}, ID=${sub.subscriptionId || 'undefined'}`, account.id);
-                }
-            }
             // 2. 过滤 MONTHLY 订阅（双重 PAYGO 保护）
             const monthlySubscriptions = subscriptions.filter((sub) => {
                 // 双重检查：确保不是 PAYGO
                 if (isPaygoSubscription(sub)) {
-                    const subId = sub.subscriptionId ? sub.subscriptionId.slice(0, 8) + '...' : 'N/A';
-                    const skipMsg = `PAYGO 订阅受保护，已跳过 (ID: ${subId})`;
+                    const skipMsg = `PAYGO 订阅受保护，已跳过 (ID: ${sub.id}, Plan: ${sub.subscriptionPlan.planType})`;
                     result.skippedCount += 1;
                     result.subscriptions.push({
-                        subscriptionId: sub.subscriptionId || '',
-                        plan: sub.subscriptionPlan,
+                        subscriptionId: String(sub.id),
+                        plan: sub.subscriptionPlan.planType,
                         status: 'SKIPPED',
                         message: skipMsg,
                     });
@@ -76,26 +69,24 @@ export class ResetService {
                     return false;
                 }
                 // 检查剩余重置次数（首次重置需要 >= 2，二次重置需要 >= 1）
-                if (resetType === 'FIRST' && sub.resetCount < 2) {
-                    const subId = sub.subscriptionId ? sub.subscriptionId.slice(0, 8) + '...' : 'N/A';
-                    const skipMsg = `首次重置需要>=2次，当前剩余: ${sub.resetCount} (Plan: ${sub.subscriptionPlan}, ID: ${subId})`;
+                if (resetType === 'FIRST' && sub.resetTimes < 2) {
+                    const skipMsg = `首次重置需要>=2次，当前剩余: ${sub.resetTimes} (Plan: ${sub.subscriptionPlan.planType}, ID: ${sub.id})`;
                     result.skippedCount += 1;
                     result.subscriptions.push({
-                        subscriptionId: sub.subscriptionId || '',
-                        plan: sub.subscriptionPlan,
+                        subscriptionId: String(sub.id),
+                        plan: sub.subscriptionPlan.planType,
                         status: 'SKIPPED',
                         message: skipMsg,
                     });
                     Logger.warning('SUBSCRIPTION_SKIPPED', skipMsg, account.id).catch(() => { });
                     return false;
                 }
-                if (resetType === 'SECOND' && sub.resetCount < 1) {
-                    const subId = sub.subscriptionId ? sub.subscriptionId.slice(0, 8) + '...' : 'N/A';
-                    const skipMsg = `二次重置需要>=1次，当前剩余: ${sub.resetCount} (Plan: ${sub.subscriptionPlan}, ID: ${subId})`;
+                if (resetType === 'SECOND' && sub.resetTimes < 1) {
+                    const skipMsg = `二次重置需要>=1次，当前剩余: ${sub.resetTimes} (Plan: ${sub.subscriptionPlan.planType}, ID: ${sub.id})`;
                     result.skippedCount += 1;
                     result.subscriptions.push({
-                        subscriptionId: sub.subscriptionId || '',
-                        plan: sub.subscriptionPlan,
+                        subscriptionId: String(sub.id),
+                        plan: sub.subscriptionPlan.planType,
                         status: 'SKIPPED',
                         message: skipMsg,
                     });
@@ -103,13 +94,12 @@ export class ResetService {
                     return false;
                 }
                 // 手动重置时的友好提示
-                if (resetType === 'MANUAL' && sub.resetCount === 0) {
-                    const subId = sub.subscriptionId ? sub.subscriptionId.slice(0, 8) + '...' : 'N/A';
-                    const skipMsg = `剩余重置次数已用完 (0/2) (Plan: ${sub.subscriptionPlan}, ID: ${subId})`;
+                if (resetType === 'MANUAL' && sub.resetTimes === 0) {
+                    const skipMsg = `剩余重置次数已用完 (0/2) (Plan: ${sub.subscriptionPlan.planType}, ID: ${sub.id})`;
                     result.skippedCount += 1;
                     result.subscriptions.push({
-                        subscriptionId: sub.subscriptionId || '',
-                        plan: sub.subscriptionPlan,
+                        subscriptionId: String(sub.id),
+                        plan: sub.subscriptionPlan.planType,
                         status: 'SKIPPED',
                         message: skipMsg,
                     });
@@ -118,16 +108,15 @@ export class ResetService {
                 }
                 // 检查是否为 MONTHLY 且激活
                 if (isMonthlySubscription(sub) && isActiveSubscription(sub)) {
-                    Logger.info('SUBSCRIPTION_ELIGIBLE', `订阅符合重置条件 (Plan: ${sub.subscriptionPlan}, Status: ${sub.status}, ResetCount: ${sub.resetCount})`, account.id).catch(() => { });
+                    Logger.info('SUBSCRIPTION_ELIGIBLE', `订阅符合重置条件 (Plan: ${sub.subscriptionPlan.planType}, Active: ${sub.isActive}, ResetTimes: ${sub.resetTimes})`, account.id).catch(() => { });
                     return true;
                 }
                 // 其他情况：不符合 MONTHLY 或 ACTIVE 条件
-                const subId = sub.subscriptionId ? sub.subscriptionId.slice(0, 8) + '...' : 'N/A';
-                const skipMsg = `订阅不符合条件 (Plan: ${sub.subscriptionPlan}, Status: ${sub.status}, ResetCount: ${sub.resetCount}, ID: ${subId})`;
+                const skipMsg = `订阅不符合条件 (Plan: ${sub.subscriptionPlan.planType}, Active: ${sub.isActive}, ResetTimes: ${sub.resetTimes}, ID: ${sub.id})`;
                 result.skippedCount += 1;
                 result.subscriptions.push({
-                    subscriptionId: sub.subscriptionId || '',
-                    plan: sub.subscriptionPlan,
+                    subscriptionId: String(sub.id),
+                    plan: sub.subscriptionPlan.planType,
                     status: 'SKIPPED',
                     message: skipMsg,
                 });
@@ -142,7 +131,7 @@ export class ResetService {
             }
             // 3. 并行重置所有符合条件的订阅
             await Logger.info('RESET_EXECUTE', `准备重置 ${monthlySubscriptions.length} 个 MONTHLY 订阅`, account.id);
-            const resetPromises = monthlySubscriptions.map((sub) => this.resetSingleSubscription(account.apiKey, sub.subscriptionId, sub.usageGb));
+            const resetPromises = monthlySubscriptions.map((sub) => this.resetSingleSubscription(account.apiKey, String(sub.id), sub.currentCredits));
             const resetResults = await Promise.allSettled(resetPromises);
             // 4. 汇总结果
             for (let i = 0; i < resetResults.length; i += 1) {
@@ -162,8 +151,8 @@ export class ResetService {
                 else {
                     result.failedCount += 1;
                     result.subscriptions.push({
-                        subscriptionId: subscription.subscriptionId,
-                        plan: subscription.subscriptionPlan,
+                        subscriptionId: String(subscription.id),
+                        plan: subscription.subscriptionPlan.planType,
                         status: 'FAILED',
                         message: resetResult?.reason instanceof Error
                             ? resetResult.reason.message
