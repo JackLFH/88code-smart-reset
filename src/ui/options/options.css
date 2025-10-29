@@ -1,0 +1,450 @@
+/**
+ * Options Page Styles
+ *
+ * @author Half open flowers
+ */
+
+/* ==================== 全局变量 ==================== */
+:root {
+  --color-primary: #4f46e5;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-bg-primary: #0f172a;
+  --color-bg-secondary: #1e293b;
+  --color-bg-tertiary: #334155;
+  --color-text-primary: #f1f5f9;
+  --color-text-secondary: #94a3b8;
+  --color-border: #334155;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+}
+
+/* ==================== 基础样式 ==================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text-primary);
+  background: var(--color-bg-primary);
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ==================== 容器布局 ==================== */
+.container {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  min-height: 100vh;
+}
+
+/* ==================== 侧边栏 ==================== */
+.sidebar {
+  background: var(--color-bg-secondary);
+  border-right: 1px solid var(--color-border);
+  padding: var(--space-xl);
+}
+
+.logo h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-success));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.version {
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.nav {
+  margin-top: var(--space-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.nav-item:hover {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+}
+
+.nav-item.active {
+  background: var(--color-primary);
+  color: white;
+}
+
+.nav-icon {
+  font-size: 1.25rem;
+}
+
+/* ==================== 主内容 ==================== */
+.main {
+  padding: var(--space-xl);
+  max-width: 800px;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+.tab-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: var(--space-md);
+}
+
+.tab-description {
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-xl);
+}
+
+/* ==================== 表单 ==================== */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-label {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.form-input {
+  padding: var(--space-md);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  font-size: 0.875rem;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.form-hint {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+}
+
+.form-actions {
+  display: flex;
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+}
+
+/* ==================== 按钮 ==================== */
+.btn {
+  padding: var(--space-md) var(--space-lg);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--color-primary), #6366f1);
+  color: white;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+}
+
+.btn-secondary {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+}
+
+.btn-secondary:hover {
+  background: var(--color-bg-tertiary);
+}
+
+/* ==================== 提示框 ==================== */
+.alert {
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  margin-top: var(--space-lg);
+}
+
+.alert.success {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid var(--color-success);
+  color: var(--color-success);
+}
+
+.alert.error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid var(--color-error);
+  color: var(--color-error);
+}
+
+/* ==================== 日志 ==================== */
+.logs-actions {
+  display: flex;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.logs-container {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.logs-loading {
+  text-align: center;
+  color: var(--color-text-secondary);
+  padding: var(--space-xl);
+}
+
+.log-entry {
+  padding: var(--space-md);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.log-entry:last-child {
+  border-bottom: none;
+}
+
+.log-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.log-level {
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-md);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.log-level.info {
+  background: rgba(79, 70, 229, 0.2);
+  color: var(--color-primary);
+}
+
+.log-level.success {
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--color-success);
+}
+
+.log-level.warning {
+  background: rgba(245, 158, 11, 0.2);
+  color: var(--color-warning);
+}
+
+.log-level.error {
+  background: rgba(239, 68, 68, 0.2);
+  color: var(--color-error);
+}
+
+.log-time {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+}
+
+.log-message {
+  color: var(--color-text-primary);
+}
+
+/* ==================== 账号列表 ==================== */
+.account-list-section {
+  margin-top: var(--space-xl);
+  padding-top: var(--space-xl);
+  border-top: 1px solid var(--color-border);
+}
+
+.section-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-lg);
+}
+
+.account-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.account-list-loading {
+  text-align: center;
+  color: var(--color-text-secondary);
+  padding: var(--space-xl);
+}
+
+.account-list-empty {
+  text-align: center;
+  color: var(--color-text-secondary);
+  padding: var(--space-xl);
+  background: var(--color-bg-secondary);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.account-card {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  transition: all 0.2s;
+}
+
+.account-card:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+.account-icon {
+  width: 48px;
+  height: 48px;
+  background: var(--color-primary);
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: white;
+  flex-shrink: 0;
+}
+
+.account-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.account-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.account-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-full);
+}
+
+.account-status.enabled {
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--color-success);
+}
+
+.account-status.disabled {
+  background: rgba(107, 114, 128, 0.2);
+  color: var(--color-text-secondary);
+}
+
+.account-meta {
+  display: flex;
+  gap: var(--space-md);
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.account-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.account-actions {
+  display: flex;
+  gap: var(--space-sm);
+  flex-shrink: 0;
+}
+
+.account-btn {
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--color-text-secondary);
+}
+
+.account-btn:hover {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+}
+
+.account-btn-delete {
+  color: var(--color-error);
+}
+
+.account-btn-delete:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: var(--color-error);
+}
+
+.account-btn-toggle {
+  color: var(--color-primary);
+}
+
+.account-btn-toggle:hover {
+  background: rgba(79, 70, 229, 0.1);
+  border-color: var(--color-primary);
+}

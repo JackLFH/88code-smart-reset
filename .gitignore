@@ -1,0 +1,59 @@
+# Dependencies
+node_modules/
+package-lock.json
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build output
+dist/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Testing
+coverage/
+*.lcov
+.nyc_output
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+.parcel-cache/
+
+# Debug files
+debug.log
+chrome-debug.log
+
+# User data
+data/
+*.json.bak
+*.db
+
+# Archives
+*.zip
+*.tar.gz
+*.rar
+
+# OS
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# 临时文件
+检查账号.html
+
+# 设计文档（不推送到远程）
+doc/

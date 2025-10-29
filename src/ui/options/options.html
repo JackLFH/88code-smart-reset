@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>88code 自动重置 - 设置</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="container">
+    <!-- 侧边栏 -->
+    <aside class="sidebar">
+      <div class="logo">
+        <h1>88code 助手</h1>
+        <p class="version">v1.0.0</p>
+      </div>
+
+      <nav class="nav">
+        <button class="nav-item active" data-tab="api">
+          <span class="nav-icon">🔑</span>
+          <span class="nav-label">API 配置</span>
+        </button>
+        <button class="nav-item" data-tab="schedule">
+          <span class="nav-icon">⏰</span>
+          <span class="nav-label">定时设置</span>
+        </button>
+        <button class="nav-item" data-tab="logs">
+          <span class="nav-icon">📋</span>
+          <span class="nav-label">日志记录</span>
+        </button>
+      </nav>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="main">
+      <!-- API 配置 Tab -->
+      <section class="tab-content active" id="apiTab">
+        <h2 class="tab-title">API 配置</h2>
+        <p class="tab-description">配置你的 88code API 密钥以开始使用</p>
+
+        <form class="form" id="apiForm">
+          <div class="form-group">
+            <label class="form-label" for="accountName">账号名称</label>
+            <input
+              type="text"
+              id="accountName"
+              class="form-input"
+              placeholder="我的主账号"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="apiKey">API 密钥</label>
+            <input
+              type="password"
+              id="apiKey"
+              class="form-input"
+              placeholder="输入你的 API 密钥"
+              required
+            />
+            <p class="form-hint">你的 API 密钥将被加密存储</p>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">保存配置</button>
+            <button type="button" class="btn btn-secondary" id="testConnectionBtn">测试连接</button>
+          </div>
+        </form>
+
+        <div class="alert hidden" id="apiAlert"></div>
+
+        <!-- 账号列表 -->
+        <div class="account-list-section">
+          <h3 class="section-title">已添加的账号</h3>
+          <div class="account-list" id="accountList">
+            <div class="account-list-loading">加载中...</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 定时设置 Tab -->
+      <section class="tab-content" id="scheduleTab">
+        <h2 class="tab-title">定时设置</h2>
+        <p class="tab-description">配置自动重置的时间</p>
+
+        <form class="form" id="scheduleForm">
+          <div class="form-group">
+            <label class="form-label" for="firstResetTime">首次重置时间</label>
+            <input
+              type="time"
+              id="firstResetTime"
+              class="form-input"
+              value="18:50"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="secondResetTime">二次重置时间</label>
+            <input
+              type="time"
+              id="secondResetTime"
+              class="form-input"
+              value="23:55"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">
+              <input type="checkbox" id="autoResetEnabled" checked />
+              启用自动重置
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">
+              <input type="checkbox" id="notificationsEnabled" checked />
+              启用通知
+            </label>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">保存设置</button>
+          </div>
+        </form>
+
+        <div class="alert hidden" id="scheduleAlert"></div>
+      </section>
+
+      <!-- 日志记录 Tab -->
+      <section class="tab-content" id="logsTab">
+        <h2 class="tab-title">日志记录</h2>
+        <p class="tab-description">查看系统操作日志</p>
+
+        <div class="logs-actions">
+          <button class="btn btn-secondary" id="refreshLogsBtn">刷新</button>
+          <button class="btn btn-secondary" id="clearLogsBtn">清空日志</button>
+        </div>
+
+        <div class="logs-container" id="logsContainer">
+          <div class="logs-loading">加载中...</div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="options.js"></script>
+</body>
+</html>

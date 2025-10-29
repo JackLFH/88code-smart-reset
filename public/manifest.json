@@ -1,0 +1,48 @@
+{
+  "manifest_version": 3,
+  "name": "88code 自动重置助手",
+  "version": "1.0.0",
+  "description": "自动重置 88code 账号，智能管理订阅配额，企业级安全防护",
+  "author": "Half open flowers <1816524875@qq.com>",
+
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    },
+    "default_title": "88code 自动重置"
+  },
+
+  "options_page": "options/options.html",
+
+  "background": {
+    "service_worker": "background/service-worker.js",
+    "type": "module"
+  },
+
+  "permissions": [
+    "storage",
+    "alarms",
+    "notifications"
+  ],
+
+  "host_permissions": [
+    "https://www.88code.org/*"
+  ],
+
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; style-src 'self' 'unsafe-inline';"
+  },
+
+  "minimum_chrome_version": "120"
+}

@@ -1,0 +1,1 @@
+在此目录下创建以下图标文件:\n- icon-16.png\n- icon-32.png\n- icon-48.png\n- icon-128.png\n\n图标设计建议：\n- 使用88code品牌色\n- 深色背景上的白色数字"88"\n- 简洁现代的设计\n\n临时替代方案：\n你可以使用在线图标生成器如：\n- https://favicon.io\n- https://www.favicon-generator.org

@@ -1,0 +1,47 @@
+{
+  "name": "88code-smart-reset",
+  "version": "1.1.0",
+  "description": "88code Smart Reset - 智能重置管理工具，支持 resetCount 检查",
+  "author": "Half open flowers <1816524875@qq.com>",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "npm run generate-icons && tsc && vite build",
+    "build:no-icons": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src --ext .ts,.tsx",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix",
+    "type-check": "tsc --noEmit",
+    "clean": "rimraf dist",
+    "generate-icons": "node scripts/generate-icons.mjs"
+  },
+  "dependencies": {
+    "dompurify": "^3.0.8"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.258",
+    "@types/dompurify": "^3.0.5",
+    "@types/node": "^20.10.6",
+    "@typescript-eslint/eslint-plugin": "^6.17.0",
+    "@typescript-eslint/parser": "^6.17.0",
+    "@vitest/coverage-v8": "^1.1.1",
+    "eslint": "^8.56.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-airbnb-typescript": "^17.1.0",
+    "eslint-plugin-import": "^2.29.1",
+    "rimraf": "^5.0.5",
+    "sharp": "^0.34.4",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.10",
+    "vite-plugin-static-copy": "^1.0.0",
+    "vitest": "^1.1.1"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}

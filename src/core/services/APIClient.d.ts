@@ -1,0 +1,82 @@
+/**
+ * APIClient
+ * 88code API 客户端
+ *
+ * 安全特性：
+ * - HTTPS 强制
+ * - HMAC-SHA256 请求签名
+ * - 速率限制（令牌桶算法）
+ * - 请求超时控制
+ * - 自动重试机制
+ *
+ * @author Half open flowers
+ */
+import type { Subscription, UsageResponse, ResetResponse } from '@/types';
+/**
+ * API 客户端类
+ */
+export declare class APIClient {
+    private rateLimiter;
+    constructor();
+    /**
+     * 执行 HTTP 请求
+     * @param method HTTP 方法
+     * @param endpoint API 端点
+     * @param apiKey API 密钥
+     * @param body 请求体
+     * @returns 响应数据
+     */
+    private request;
+    /**
+     * 带超时的 fetch
+     */
+    private fetchWithTimeout;
+    /**
+     * 生成 HMAC-SHA256 签名
+     * @param method HTTP 方法
+     * @param endpoint API 端点
+     * @param apiKey API 密钥
+     * @param timestamp 时间戳
+     * @param nonce 随机数
+     * @param body 请求体（可选）
+     * @returns Base64 签名
+     */
+    private generateSignature;
+    /**
+     * 获取订阅列表
+     * @param apiKey API 密钥
+     * @returns 订阅列表
+     */
+    getSubscriptions(apiKey: string): Promise<Subscription[]>;
+    /**
+     * 获取使用情况
+     * @param apiKey API 密钥
+     * @returns 使用情况
+     */
+    getUsage(apiKey: string): Promise<UsageResponse>;
+    /**
+     * 重置积分
+     * @param apiKey API 密钥
+     * @param subscriptionId 订阅ID
+     * @returns 重置响应
+     */
+    resetCredits(apiKey: string, subscriptionId: string): Promise<ResetResponse>;
+    /**
+     * 测试连接
+     * @param apiKey API 密钥
+     * @returns 是否连接成功
+     */
+    testConnection(apiKey: string): Promise<boolean>;
+    /**
+     * 获取速率限制状态
+     */
+    getRateLimitStatus(): {
+        availableTokens: number;
+        capacity: number;
+    };
+}
+/**
+ * 全局单例实例
+ */
+export declare const apiClient: APIClient;
+//# sourceMappingURL=APIClient.d.ts.map

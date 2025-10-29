@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>88code 自动重置</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <!-- 头部 -->
+    <header class="header">
+      <h1 class="title">88code 助手</h1>
+      <div class="status-indicator" id="statusIndicator">
+        <span class="status-dot"></span>
+        <span class="status-text">连接中...</span>
+      </div>
+    </header>
+
+    <!-- 使用情况卡片 -->
+    <section class="usage-card" id="usageCard">
+      <div class="usage-loading" id="usageLoading">
+        <div class="loading-spinner"></div>
+        <p>加载中...</p>
+      </div>
+
+      <div class="usage-content hidden" id="usageContent">
+        <!-- 圆形进度条 -->
+        <div class="usage-gauge">
+          <svg class="gauge-svg" viewBox="0 0 200 200">
+            <circle class="gauge-bg" cx="100" cy="100" r="80"></circle>
+            <circle class="gauge-fill" id="gaugeFill" cx="100" cy="100" r="80"></circle>
+          </svg>
+          <div class="gauge-text">
+            <div class="gauge-percentage" id="gaugePercentage">0%</div>
+            <div class="gauge-label">已使用</div>
+          </div>
+        </div>
+
+        <!-- 使用详情 -->
+        <div class="usage-details">
+          <div class="detail-item">
+            <span class="detail-label">已用</span>
+            <span class="detail-value" id="usedValue">0 GB</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">总量</span>
+            <span class="detail-value" id="totalValue">0 GB</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">剩余</span>
+            <span class="detail-value" id="remainingValue">0 GB</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 错误状态 -->
+      <div class="usage-error hidden" id="usageError">
+        <div class="error-icon">⚠️</div>
+        <p class="error-message" id="errorMessage">加载失败</p>
+      </div>
+    </section>
+
+    <!-- 操作按钮 -->
+    <section class="actions">
+      <button class="btn btn-primary" id="resetBtn">
+        <span class="btn-text">立即重置</span>
+        <span class="btn-loading hidden">
+          <span class="loading-spinner-small"></span>
+        </span>
+      </button>
+      <button class="btn btn-secondary" id="settingsBtn">设置</button>
+    </section>
+
+    <!-- 下次重置时间 -->
+    <section class="next-reset" id="nextReset">
+      <div class="next-reset-label">下次自动重置</div>
+      <div class="next-reset-time" id="nextResetTime">未设置</div>
+    </section>
+
+    <!-- 底部链接 -->
+    <footer class="footer">
+      <a href="#" id="viewLogsLink" class="footer-link">查看日志</a>
+      <span class="footer-divider">|</span>
+      <a href="https://github.com/Vulpecula-Studio/88code_reset" target="_blank" class="footer-link">GitHub</a>
+    </footer>
+  </div>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>
