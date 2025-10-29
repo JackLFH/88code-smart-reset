@@ -55,58 +55,70 @@ export class ResetService {
             const monthlySubscriptions = subscriptions.filter((sub) => {
                 // 双重检查：确保不是 PAYGO
                 if (isPaygoSubscription(sub)) {
+                    const skipMsg = `PAYGO 订阅受保护，已跳过 (ID: ${sub.subscriptionId.slice(0, 8)}...)`;
                     result.skippedCount += 1;
                     result.subscriptions.push({
                         subscriptionId: sub.subscriptionId,
                         plan: sub.subscriptionPlan,
                         status: 'SKIPPED',
-                        message: 'PAYGO 订阅受保护，已跳过',
+                        message: skipMsg,
                     });
+                    Logger.info('SUBSCRIPTION_SKIPPED', skipMsg, account.id).catch(() => { });
                     return false;
                 }
                 // 检查剩余重置次数（首次重置需要 >= 2，二次重置需要 >= 1）
                 if (resetType === 'FIRST' && sub.resetCount < 2) {
+                    const skipMsg = `首次重置需要>=2次，当前剩余: ${sub.resetCount} (Plan: ${sub.subscriptionPlan}, ID: ${sub.subscriptionId.slice(0, 8)}...)`;
                     result.skippedCount += 1;
                     result.subscriptions.push({
                         subscriptionId: sub.subscriptionId,
                         plan: sub.subscriptionPlan,
                         status: 'SKIPPED',
-                        message: `首次重置需要至少2次剩余次数，当前剩余: ${sub.resetCount}`,
+                        message: skipMsg,
                     });
+                    Logger.warning('SUBSCRIPTION_SKIPPED', skipMsg, account.id).catch(() => { });
                     return false;
                 }
                 if (resetType === 'SECOND' && sub.resetCount < 1) {
+                    const skipMsg = `二次重置需要>=1次，当前剩余: ${sub.resetCount} (Plan: ${sub.subscriptionPlan}, ID: ${sub.subscriptionId.slice(0, 8)}...)`;
                     result.skippedCount += 1;
                     result.subscriptions.push({
                         subscriptionId: sub.subscriptionId,
                         plan: sub.subscriptionPlan,
                         status: 'SKIPPED',
-                        message: `二次重置需要至少1次剩余次数，当前剩余: ${sub.resetCount}`,
+                        message: skipMsg,
                     });
+                    Logger.warning('SUBSCRIPTION_SKIPPED', skipMsg, account.id).catch(() => { });
                     return false;
                 }
                 // 手动重置时的友好提示
                 if (resetType === 'MANUAL' && sub.resetCount === 0) {
+                    const skipMsg = `剩余重置次数已用完 (0/2) (Plan: ${sub.subscriptionPlan}, ID: ${sub.subscriptionId.slice(0, 8)}...)`;
                     result.skippedCount += 1;
                     result.subscriptions.push({
                         subscriptionId: sub.subscriptionId,
                         plan: sub.subscriptionPlan,
                         status: 'SKIPPED',
-                        message: `剩余重置次数已用完 (0/2)`,
+                        message: skipMsg,
                     });
+                    Logger.warning('SUBSCRIPTION_SKIPPED', skipMsg, account.id).catch(() => { });
                     return false;
                 }
                 // 检查是否为 MONTHLY 且激活
                 if (isMonthlySubscription(sub) && isActiveSubscription(sub)) {
+                    Logger.info('SUBSCRIPTION_ELIGIBLE', `订阅符合重置条件 (Plan: ${sub.subscriptionPlan}, Status: ${sub.status}, ResetCount: ${sub.resetCount})`, account.id).catch(() => { });
                     return true;
                 }
+                // 其他情况：不符合 MONTHLY 或 ACTIVE 条件
+                const skipMsg = `订阅不符合条件 (Plan: ${sub.subscriptionPlan}, Status: ${sub.status}, ResetCount: ${sub.resetCount}, ID: ${sub.subscriptionId.slice(0, 8)}...)`;
                 result.skippedCount += 1;
                 result.subscriptions.push({
                     subscriptionId: sub.subscriptionId,
                     plan: sub.subscriptionPlan,
                     status: 'SKIPPED',
-                    message: `订阅不符合重置条件（状态: ${sub.status}）`,
+                    message: skipMsg,
                 });
+                Logger.warning('SUBSCRIPTION_SKIPPED', skipMsg, account.id).catch(() => { });
                 return false;
             });
             if (monthlySubscriptions.length === 0) {
