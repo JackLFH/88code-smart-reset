@@ -97,7 +97,18 @@ async function handleMessage(message, sender) {
                     return createSuccessResponse(null);
                 }
                 const usage = await apiClient.getUsage(firstAccount.apiKey);
-                return createSuccessResponse(usage);
+                // 转换为前端期望的格式（88code使用Credits，不是GB）
+                // 注意：currentCredits是剩余积分，不是已使用！
+                const remainingCredits = usage.currentCredits ?? 0;
+                const totalCredits = usage.creditLimit ?? 0;
+                const usedCredits = Math.max(0, totalCredits - remainingCredits);
+                const usagePercentage = totalCredits > 0 ? (usedCredits / totalCredits) * 100 : 0;
+                return createSuccessResponse({
+                    totalQuotaGb: totalCredits, // 总配额
+                    usedGb: usedCredits, // 已使用 = 总额 - 剩余
+                    remainingGb: remainingCredits, // 剩余积分
+                    usagePercentage, // 使用百分比
+                });
             }
             case 'GET_ACCOUNTS': {
                 const accounts = await StorageService.getAccounts();
@@ -127,15 +138,19 @@ async function handleMessage(message, sender) {
                 const payload = message.payload;
                 const manual = payload?.manual ?? false;
                 if (manual) {
-                    await scheduler.triggerManualReset();
+                    const result = await scheduler.triggerManualReset();
+                    return createSuccessResponse(result);
                 }
-                else {
-                    const accounts = await StorageService.getAccounts();
-                    if (accounts.length > 0 && accounts[0]) {
-                        await resetService.executeReset(accounts[0], false, 'MANUAL');
-                    }
+                const accounts = await StorageService.getAccounts();
+                if (accounts.length > 0 && accounts[0]) {
+                    const result = await resetService.executeReset(accounts[0], false, 'MANUAL');
+                    return createSuccessResponse({
+                        success: result.status === 'SUCCESS',
+                        message: result.summary,
+                        results: [result],
+                    });
                 }
-                return createSuccessResponse({ success: true });
+                return createErrorResponse('NO_ACCOUNTS', '没有可用的账号');
             }
             case 'SAVE_API_KEY': {
                 const payload = message.payload;

@@ -54,10 +54,13 @@ const sendMessage = async <T>(type: string, payload?: unknown): Promise<T> => {
 };
 
 /**
- * 格式化 GB 数值
+ * 格式化 Credits 数值（88code使用积分制，不是GB）
  */
-const formatGB = (gb: number): string => {
-  return `${gb.toFixed(2)} GB`;
+const formatCredits = (credits: number | undefined | null): string => {
+  if (credits === undefined || credits === null || Number.isNaN(credits)) {
+    return '-- Credits';
+  }
+  return `$${credits.toFixed(2)}`;
 };
 
 /**
@@ -104,21 +107,21 @@ const showError = (message: string): void => {
  * 更新使用情况显示
  */
 const updateUsageDisplay = (usage: {
-  totalQuotaGb: number;
-  usedGb: number;
-  remainingGb: number;
-  usagePercentage: number;
+  totalQuotaGb?: number;
+  usedGb?: number;
+  remainingGb?: number;
+  usagePercentage?: number;
 }): void => {
   usageLoading.classList.add('hidden');
   usageError.classList.add('hidden');
   usageContent.classList.remove('hidden');
 
-  // 更新数值
-  const percentage = Math.min(Math.max(usage.usagePercentage, 0), 100);
-  gaugePercentage.textContent = `${percentage.toFixed(1)}%`;
-  usedValue.textContent = formatGB(usage.usedGb);
-  totalValue.textContent = formatGB(usage.totalQuotaGb);
-  remainingValue.textContent = formatGB(usage.remainingGb);
+  // 更新数值（添加防御性检查）
+  const percentage = Math.min(Math.max(usage.usagePercentage ?? 0, 0), 100);
+  gaugePercentage.textContent = Number.isNaN(percentage) ? '--.--%' : `${percentage.toFixed(1)}%`;
+  usedValue.textContent = formatCredits(usage.usedGb);
+  totalValue.textContent = formatCredits(usage.totalQuotaGb);
+  remainingValue.textContent = formatCredits(usage.remainingGb);
 
   // 更新圆形进度条
   const circumference = 2 * Math.PI * 80; // r=80
@@ -169,10 +172,10 @@ const loadUsage = async (): Promise<void> => {
 
   try {
     const usage = await sendMessage<{
-      totalQuotaGb: number;
-      usedGb: number;
-      remainingGb: number;
-      usagePercentage: number;
+      totalQuotaGb?: number;
+      usedGb?: number;
+      remainingGb?: number;
+      usagePercentage?: number;
     } | null>('GET_USAGE');
 
     if (!usage) {
@@ -217,19 +220,34 @@ resetBtn.addEventListener('click', async () => {
   btnLoading.classList.remove('hidden');
 
   try {
-    await sendMessage('EXECUTE_RESET', { manual: true });
+    const result = await sendMessage<{ success: boolean; message: string }>('EXECUTE_RESET', { manual: true });
 
-    // 显示成功提示
-    btnText.textContent = '重置成功！';
-    btnText.classList.remove('hidden');
-    btnLoading.classList.add('hidden');
+    // 根据结果显示不同的提示
+    if (result.success) {
+      // 重置成功
+      btnText.textContent = '重置成功！';
+      btnText.classList.remove('hidden');
+      btnLoading.classList.add('hidden');
 
-    // 重新加载数据
-    setTimeout(() => {
-      btnText.textContent = '立即重置';
-      loadUsage();
-      loadStatus();
-    }, 1500);
+      // 重新加载数据
+      setTimeout(() => {
+        btnText.textContent = '立即重置';
+        loadUsage();
+        loadStatus();
+      }, 1500);
+    } else {
+      // 重置被跳过（比如冷却中）
+      btnText.textContent = '无法重置';
+      btnText.classList.remove('hidden');
+      btnLoading.classList.add('hidden');
+
+      // 显示详细原因
+      showError(result.message || '操作被跳过');
+
+      setTimeout(() => {
+        btnText.textContent = '立即重置';
+      }, 3000);
+    }
   } catch (error) {
     // 显示错误
     btnText.textContent = '重置失败';

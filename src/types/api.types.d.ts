@@ -97,21 +97,42 @@ export interface Subscription {
     updatedAt: string;
 }
 /**
- * 使用情况响应
+ * 使用情况响应（实际API返回）
  */
 export interface UsageResponse {
-    /** 账号ID */
-    accountId: string;
-    /** 总配额（GB） */
-    totalQuotaGb: number;
-    /** 已使用（GB） */
-    usedGb: number;
-    /** 剩余配额（GB） */
-    remainingGb: number;
-    /** 使用百分比（0-100） */
-    usagePercentage: number;
-    /** 查询时间戳 */
-    timestamp: number;
+    /** API Key ID */
+    id: number;
+    /** Key ID */
+    keyId: string;
+    /** API Key名称 */
+    name: string;
+    /** 员工ID */
+    employeeId: number;
+    /** 订阅ID */
+    subscriptionId: number;
+    /** 订阅名称 */
+    subscriptionName: string;
+    /** 当前已用积分 */
+    currentCredits: number;
+    /** 积分限制 */
+    creditLimit: number;
+    /** 订阅列表 */
+    subscriptionEntityList: Subscription[];
+    /** 创建时间 */
+    createdAt: string;
+    /** 更新时间 */
+    updatedAt: string;
+}
+/**
+ * 重置响应数据
+ */
+export interface ResetResponseData {
+    /** 订阅ID */
+    subscriptionId: number;
+    /** 重置后的新积分 */
+    newCredits: number;
+    /** 重置时间 */
+    resetAt: string;
 }
 /**
  * 重置响应
@@ -121,12 +142,14 @@ export interface ResetResponse {
     success: boolean;
     /** 消息 */
     message: string;
-    /** 重置后的使用情况 */
-    usage?: UsageResponse;
-    /** 剩余重置次数 */
-    remainingResets?: number;
-    /** 重置时间戳 */
-    resetTimestamp?: number;
+    /** 响应数据 */
+    data?: ResetResponseData;
+    /** 错误信息（如有） */
+    error?: {
+        code: number;
+        message: string;
+        type: string;
+    };
 }
 /**
  * API 错误响应

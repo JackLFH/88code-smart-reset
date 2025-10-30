@@ -4,7 +4,7 @@
  *
  * 安全特性：
  * - HTTPS 强制
- * - HMAC-SHA256 请求签名
+ * - Authorization 认证
  * - 速率限制（令牌桶算法）
  * - 请求超时控制
  * - 自动重试机制
@@ -148,29 +148,14 @@ export class APIClient {
     }
 
     const url = `${API_CONFIG.BASE_URL}${endpoint}`;
-    const timestamp = Date.now();
-    const nonce = crypto.randomUUID();
 
-    // 序列化请求体（用于签名和发送）
+    // 序列化请求体
     const bodyString = body ? JSON.stringify(body) : undefined;
 
-    // 生成请求签名（包含请求体哈希）
-    const signature = await this.generateSignature(
-      method,
-      endpoint,
-      apiKey,
-      timestamp,
-      nonce,
-      bodyString,
-    );
-
-    // 构造请求头（88code使用Authorization认证）
+    // 构造请求头（88code只需要Authorization认证，无需签名）
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
       Authorization: apiKey,
-      'X-Timestamp': timestamp.toString(),
-      'X-Nonce': nonce,
-      'X-Signature': signature,
     };
 
     // 构造请求选项
@@ -180,16 +165,54 @@ export class APIClient {
       ...(bodyString && { body: bodyString }),
     };
 
+    // 详细记录请求信息
+    await Logger.info('API_REQUEST_START', `发起请求: ${method} ${endpoint}`, undefined, {
+      url,
+      method,
+      hasBody: !!bodyString,
+      apiKeyPrefix: apiKey.slice(0, 8) + '...',
+    });
+
     try {
       // 带超时的 fetch
       const response = await this.fetchWithTimeout(url, options, API_CONFIG.TIMEOUT);
 
+      // 记录响应状态
+      await Logger.info('API_RESPONSE_STATUS', `收到响应: ${endpoint}`, undefined, {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+      });
+
+      // 🔍 直接输出到console进行调试
+      console.log(`[DEBUG] 响应状态: ${response.status} ${response.statusText}, ok=${response.ok}`);
+
       // 检查 HTTP 状态码
       if (!response.ok) {
         const errorData = (await response.json().catch(() => ({}))) as Partial<APIError>;
+        const errorMessage = errorData.message ?? `HTTP ${response.status}: ${response.statusText}`;
+
+        // 🔍 输出错误详情
+        console.error('[DEBUG] API返回错误:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorCode: errorData.code,
+          errorMessage,
+          errorData,
+        });
+
+        // 记录详细的错误信息
+        await Logger.error('API_ERROR_RESPONSE', `API返回错误 (${endpoint})`, undefined, {
+          statusCode: response.status,
+          statusText: response.statusText,
+          errorCode: errorData.code,
+          errorMessage,
+          errorDetails: errorData.details,
+        });
+
         throw createError(
           errorData.code ?? 'HTTP_ERROR',
-          errorData.message ?? `HTTP ${response.status}: ${response.statusText}`,
+          errorMessage,
           {
             statusCode: response.status,
             ...errorData.details,
@@ -198,13 +221,39 @@ export class APIClient {
       }
 
       // 解析响应
-      return (await response.json()) as T;
+      const responseData = await response.json();
+
+      // 🔍 输出成功响应的数据
+      console.log('[DEBUG] API响应成功:', {
+        endpoint,
+        status: response.status,
+        data: responseData,
+      });
+
+      return responseData as T;
     } catch (error) {
-      // 记录错误日志
+      // 🔍 直接输出错误到console
+      console.error('[DEBUG] API请求异常:', {
+        method,
+        endpoint,
+        url,
+        errorName: error instanceof Error ? error.name : 'Unknown',
+        errorMessage: error instanceof Error ? error.message : String(error),
+        errorType: error instanceof Error ? error.constructor.name : typeof error,
+        errorStack: error instanceof Error ? error.stack : undefined,
+        fullError: error,
+      });
+
+      // 记录详细的错误日志
       await Logger.error('API_REQUEST', `请求失败: ${endpoint}`, undefined, {
         method,
         endpoint,
-        error: error instanceof Error ? error.message : String(error),
+        url,
+        errorName: error instanceof Error ? error.name : 'Unknown',
+        errorMessage: error instanceof Error ? error.message : String(error),
+        errorType: error instanceof Error ? error.constructor.name : typeof error,
+        errorStack: error instanceof Error ? error.stack : undefined,
+        errorCode: (error as any).code,
       });
 
       throw error;
@@ -231,6 +280,16 @@ export class APIClient {
       return response;
     } catch (error) {
       clearTimeout(timeoutId);
+
+      // 详细记录fetch错误
+      await Logger.error('FETCH_ERROR', `网络请求失败: ${url}`, undefined, {
+        errorName: error instanceof Error ? error.name : 'Unknown',
+        errorMessage: error instanceof Error ? error.message : String(error),
+        errorType: error instanceof Error ? error.constructor.name : typeof error,
+        url,
+        method: options.method,
+      });
+
       if (error instanceof Error && error.name === 'AbortError') {
         throw createError('REQUEST_TIMEOUT', `请求超时（${timeout}ms）`);
       }
@@ -238,58 +297,6 @@ export class APIClient {
     }
   }
 
-  /**
-   * 生成 HMAC-SHA256 签名
-   * @param method HTTP 方法
-   * @param endpoint API 端点
-   * @param apiKey API 密钥
-   * @param timestamp 时间戳
-   * @param nonce 随机数
-   * @param body 请求体（可选）
-   * @returns Base64 签名
-   */
-  private async generateSignature(
-    method: string,
-    endpoint: string,
-    apiKey: string,
-    timestamp: number,
-    nonce: string,
-    body?: string,
-  ): Promise<string> {
-    const encoder = new TextEncoder();
-
-    // 计算请求体的哈希（如果存在）
-    let bodyHash = '';
-    if (body) {
-      const bodyData = encoder.encode(body);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', bodyData);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      bodyHash = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-    }
-
-    // 构造签名字符串，包含请求体哈希
-    // 格式: METHOD|ENDPOINT|TIMESTAMP|NONCE|BODY_HASH
-    const message = `${method}|${endpoint}|${timestamp}|${nonce}|${bodyHash}`;
-
-    // 导入密钥
-    const keyData = encoder.encode(apiKey);
-    const key = await crypto.subtle.importKey(
-      'raw',
-      keyData,
-      { name: 'HMAC', hash: 'SHA-256' },
-      false,
-      ['sign'],
-    );
-
-    // 生成签名
-    const messageData = encoder.encode(message);
-    const signature = await crypto.subtle.sign('HMAC', key, messageData);
-
-    // 转换为 Base64
-    const signatureArray = Array.from(new Uint8Array(signature));
-    const signatureString = String.fromCharCode(...signatureArray);
-    return btoa(signatureString);
-  }
 
   // ==================== API 方法 ====================
 

@@ -56,7 +56,11 @@ export declare class Scheduler {
     /**
      * 手动触发重置
      */
-    triggerManualReset(): Promise<void>;
+    triggerManualReset(): Promise<{
+        success: boolean;
+        message: string;
+        results: any[];
+    }>;
 }
 /**
  * 全局单例实例

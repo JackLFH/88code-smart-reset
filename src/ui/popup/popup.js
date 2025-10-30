@@ -42,10 +42,13 @@ const sendMessage = async (type, payload) => {
     });
 };
 /**
- * 格式化 GB 数值
+ * 格式化 Credits 数值（88code使用积分制，不是GB）
  */
-const formatGB = (gb) => {
-    return `${gb.toFixed(2)} GB`;
+const formatCredits = (credits) => {
+    if (credits === undefined || credits === null || Number.isNaN(credits)) {
+        return '-- Credits';
+    }
+    return `$${credits.toFixed(2)}`;
 };
 /**
  * 格式化时间戳
@@ -89,12 +92,12 @@ const updateUsageDisplay = (usage) => {
     usageLoading.classList.add('hidden');
     usageError.classList.add('hidden');
     usageContent.classList.remove('hidden');
-    // 更新数值
-    const percentage = Math.min(Math.max(usage.usagePercentage, 0), 100);
-    gaugePercentage.textContent = `${percentage.toFixed(1)}%`;
-    usedValue.textContent = formatGB(usage.usedGb);
-    totalValue.textContent = formatGB(usage.totalQuotaGb);
-    remainingValue.textContent = formatGB(usage.remainingGb);
+    // 更新数值（添加防御性检查）
+    const percentage = Math.min(Math.max(usage.usagePercentage ?? 0, 0), 100);
+    gaugePercentage.textContent = Number.isNaN(percentage) ? '--.--%' : `${percentage.toFixed(1)}%`;
+    usedValue.textContent = formatCredits(usage.usedGb);
+    totalValue.textContent = formatCredits(usage.totalQuotaGb);
+    remainingValue.textContent = formatCredits(usage.remainingGb);
     // 更新圆形进度条
     const circumference = 2 * Math.PI * 80; // r=80
     const offset = circumference - (percentage / 100) * circumference;
@@ -176,17 +179,31 @@ resetBtn.addEventListener('click', async () => {
     btnText.classList.add('hidden');
     btnLoading.classList.remove('hidden');
     try {
-        await sendMessage('EXECUTE_RESET', { manual: true });
-        // 显示成功提示
-        btnText.textContent = '重置成功！';
-        btnText.classList.remove('hidden');
-        btnLoading.classList.add('hidden');
-        // 重新加载数据
-        setTimeout(() => {
-            btnText.textContent = '立即重置';
-            loadUsage();
-            loadStatus();
-        }, 1500);
+        const result = await sendMessage('EXECUTE_RESET', { manual: true });
+        // 根据结果显示不同的提示
+        if (result.success) {
+            // 重置成功
+            btnText.textContent = '重置成功！';
+            btnText.classList.remove('hidden');
+            btnLoading.classList.add('hidden');
+            // 重新加载数据
+            setTimeout(() => {
+                btnText.textContent = '立即重置';
+                loadUsage();
+                loadStatus();
+            }, 1500);
+        }
+        else {
+            // 重置被跳过（比如冷却中）
+            btnText.textContent = '无法重置';
+            btnText.classList.remove('hidden');
+            btnLoading.classList.add('hidden');
+            // 显示详细原因
+            showError(result.message || '操作被跳过');
+            setTimeout(() => {
+                btnText.textContent = '立即重置';
+            }, 3000);
+        }
     }
     catch (error) {
         // 显示错误

@@ -277,7 +277,7 @@ export class Scheduler {
   /**
    * 手动触发重置
    */
-  async triggerManualReset(): Promise<void> {
+  async triggerManualReset(): Promise<{ success: boolean; message: string; results: any[] }> {
     await Logger.info('MANUAL_RESET', '手动触发重置');
 
     const accounts = await StorageService.getAccounts();
@@ -293,16 +293,50 @@ export class Scheduler {
 
     let successCount = 0;
     let failedCount = 0;
+    let skippedCount = 0;
+    const allResults = [];
 
     for (const result of results) {
-      if (result.status === 'fulfilled' && result.value.status === 'SUCCESS') {
-        successCount += 1;
+      if (result.status === 'fulfilled') {
+        allResults.push(result.value);
+        if (result.value.status === 'SUCCESS') {
+          successCount += 1;
+        } else if (result.value.status === 'SKIPPED') {
+          skippedCount += 1;
+        } else {
+          failedCount += 1;
+        }
       } else {
         failedCount += 1;
       }
     }
 
-    await Logger.success('MANUAL_RESET', `手动重置完成：${successCount} 成功，${failedCount} 失败`);
+    // 生成友好的消息
+    let message = '';
+    let success = false;
+
+    if (skippedCount > 0 && successCount === 0 && failedCount === 0) {
+      // 全部跳过（比如冷却中）
+      const firstSkipped = allResults.find(r => r.status === 'SKIPPED');
+      message = firstSkipped?.summary || '操作已跳过';
+      success = false; // 虽然没出错，但也没成功重置
+    } else if (successCount > 0 && failedCount === 0) {
+      // 全部成功
+      message = `成功重置 ${successCount} 个订阅`;
+      success = true;
+    } else if (successCount > 0) {
+      // 部分成功
+      message = `部分成功：${successCount} 成功，${failedCount} 失败`;
+      success = true;
+    } else {
+      // 全部失败
+      message = `重置失败：${failedCount} 个订阅失败`;
+      success = false;
+    }
+
+    await Logger.success('MANUAL_RESET', `手动重置完成：${successCount} 成功，${failedCount} 失败，${skippedCount} 跳过`);
+
+    return { success, message, results: allResults };
   }
 }
 

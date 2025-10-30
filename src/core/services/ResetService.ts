@@ -72,7 +72,7 @@ export class ResetService {
       // 输出订阅摘要信息
       await Logger.info('DEBUG_SUBSCRIPTIONS', `获取到 ${subscriptions.length} 个订阅，开始分析...`, account.id);
 
-      // 2. 过滤 MONTHLY 订阅（双重 PAYGO 保护）
+      // 2. 过滤 MONTHLY 订阅（双重 PAYGO 保护 + 冷却检查）
       const monthlySubscriptions = subscriptions.filter((sub) => {
         // 双重检查：确保不是 PAYGO
         if (isPaygoSubscription(sub)) {
@@ -86,6 +86,31 @@ export class ResetService {
           });
           Logger.info('SUBSCRIPTION_SKIPPED', skipMsg, account.id).catch(() => {});
           return false;
+        }
+
+        // 手动重置时检查冷却时间（5小时 = 18000000毫秒）
+        if (manual && sub.lastCreditReset) {
+          const lastResetTime = new Date(sub.lastCreditReset).getTime();
+          const now = Date.now();
+          const timeSinceLastReset = now - lastResetTime;
+          const cooldownPeriod = 5 * 60 * 60 * 1000; // 5小时
+
+          if (timeSinceLastReset < cooldownPeriod) {
+            const remainingMs = cooldownPeriod - timeSinceLastReset;
+            const remainingHours = Math.floor(remainingMs / (60 * 60 * 1000));
+            const remainingMinutes = Math.floor((remainingMs % (60 * 60 * 1000)) / (60 * 1000));
+
+            const skipMsg = `冷却中，还需等待 ${remainingHours}小时${remainingMinutes}分钟 (上次重置: ${sub.lastCreditReset})`;
+            result.skippedCount += 1;
+            result.subscriptions.push({
+              subscriptionId: String(sub.id),
+              plan: sub.subscriptionPlan.planType,
+              status: 'SKIPPED',
+              message: skipMsg,
+            });
+            Logger.warning('SUBSCRIPTION_COOLDOWN', skipMsg, account.id).catch(() => {});
+            return false;
+          }
         }
 
         // 检查剩余重置次数（首次重置需要 >= 2，二次重置需要 >= 1）
@@ -150,7 +175,22 @@ export class ResetService {
 
       if (monthlySubscriptions.length === 0) {
         result.status = 'SKIPPED';
-        result.summary = '没有符合重置条件的 MONTHLY 订阅';
+
+        // 分析跳过原因，生成友好提示
+        const cooldownSkipped = result.subscriptions.filter(s => s.message?.includes('冷却中'));
+        const paygoSkipped = result.subscriptions.filter(s => s.message?.includes('PAYGO'));
+        const resetTimesSkipped = result.subscriptions.filter(s => s.message?.includes('重置次数'));
+
+        if (cooldownSkipped.length > 0) {
+          result.summary = `冷却中：${cooldownSkipped[0]?.message || '请等待5小时后再试'}`;
+        } else if (paygoSkipped.length > 0) {
+          result.summary = `所有订阅均为PAYGO类型，无需重置`;
+        } else if (resetTimesSkipped.length > 0) {
+          result.summary = `今日重置次数已用完（0/2）`;
+        } else {
+          result.summary = '没有符合重置条件的 MONTHLY 订阅';
+        }
+
         await Logger.warning('RESET_SKIPPED', result.summary, account.id);
         return this.finalizeResult(result);
       }
@@ -247,9 +287,31 @@ export class ResetService {
 
     try {
       // 执行重置
+      await Logger.info('RESET_API_CALL', `开始调用重置API (ID: ${subscriptionId})`, undefined);
       const response = await apiClient.resetCredits(apiKey, subscriptionId);
 
+      // 记录完整的API响应
+      await Logger.info('RESET_API_RESPONSE', `收到重置API响应 (ID: ${subscriptionId})`, undefined, {
+        success: response.success,
+        message: response.message,
+        hasData: !!response.data,
+        hasError: !!response.error,
+        dataSubscriptionId: response.data?.subscriptionId,
+        dataNewCredits: response.data?.newCredits,
+        dataResetAt: response.data?.resetAt,
+        errorCode: response.error?.code,
+        errorMessage: response.error?.message,
+        errorType: response.error?.type,
+        fullResponse: JSON.stringify(response),
+      });
+
+      // 检查API返回的success字段
       if (!response.success) {
+        await Logger.error('RESET_API_FAILED', `API返回失败 (ID: ${subscriptionId})`, undefined, {
+          message: response.message,
+          error: response.error,
+          response: JSON.stringify(response),
+        });
         return {
           subscriptionId,
           plan: 'MONTHLY',
@@ -260,30 +322,53 @@ export class ResetService {
         };
       }
 
-      // 验证重置成功（检查使用量是否减少）
-      const usageAfter = response.usage?.usedGb ?? usageBefore;
-      const resetSuccessful = usageAfter < usageBefore;
+      // 检查是否有错误信息
+      if (response.error) {
+        await Logger.error('RESET_API_ERROR', `API返回错误信息 (ID: ${subscriptionId})`, undefined, {
+          errorCode: response.error.code,
+          errorMessage: response.error.message,
+          errorType: response.error.type,
+        });
+        return {
+          subscriptionId,
+          plan: 'MONTHLY',
+          status: 'FAILED',
+          message: response.error.message || '重置失败',
+          usageBefore,
+          duration: Date.now() - resetStart,
+        };
+      }
+
+      // 验证重置成功（根据API返回的data字段）
+      const newCredits = response.data?.newCredits ?? usageBefore;
+      const resetSuccessful = response.success && response.data !== undefined;
 
       return {
         subscriptionId,
         plan: 'MONTHLY',
         status: resetSuccessful ? 'SUCCESS' : 'FAILED',
         message: resetSuccessful
-          ? `成功重置（${usageBefore.toFixed(2)}GB → ${usageAfter.toFixed(2)}GB）`
-          : '重置后使用量未减少',
+          ? `成功重置（${usageBefore.toFixed(2)} → ${newCredits.toFixed(2)} Credits，重置时间：${response.data?.resetAt}）`
+          : '重置未返回数据',
         usageBefore,
-        usageAfter,
+        usageAfter: newCredits,
         duration: Date.now() - resetStart,
       };
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      await Logger.error('RESET_EXCEPTION', `重置异常 (ID: ${subscriptionId})`, undefined, {
+        error: errorMsg,
+        errorType: error instanceof Error ? error.constructor.name : typeof error,
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       return {
         subscriptionId,
         plan: 'MONTHLY',
         status: 'FAILED',
-        message: error instanceof Error ? error.message : String(error),
+        message: errorMsg,
         usageBefore,
         duration: Date.now() - resetStart,
-        error: error instanceof Error ? error.message : String(error),
+        error: errorMsg,
       };
     }
   }

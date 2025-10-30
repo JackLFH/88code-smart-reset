@@ -4,7 +4,7 @@
  *
  * 安全特性：
  * - HTTPS 强制
- * - HMAC-SHA256 请求签名
+ * - Authorization 认证
  * - 速率限制（令牌桶算法）
  * - 请求超时控制
  * - 自动重试机制
@@ -31,17 +31,6 @@ export declare class APIClient {
      * 带超时的 fetch
      */
     private fetchWithTimeout;
-    /**
-     * 生成 HMAC-SHA256 签名
-     * @param method HTTP 方法
-     * @param endpoint API 端点
-     * @param apiKey API 密钥
-     * @param timestamp 时间戳
-     * @param nonce 随机数
-     * @param body 请求体（可选）
-     * @returns Base64 签名
-     */
-    private generateSignature;
     /**
      * 获取订阅列表
      * @param apiKey API 密钥
