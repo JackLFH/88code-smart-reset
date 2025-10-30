@@ -127,9 +127,37 @@ async function handleMessage(message, sender) {
             case 'GET_STATUS': {
                 const nextTimes = await scheduler.getNextScheduledTime();
                 const accounts = await StorageService.getAccounts();
+                // 计算下一次重置时间（取最近的那个）
+                const now = Date.now();
+                let nextScheduledReset = null;
+                if (nextTimes.firstReset && nextTimes.secondReset) {
+                    // 如果两个都有，取离现在最近的未来时间
+                    const firstDiff = nextTimes.firstReset - now;
+                    const secondDiff = nextTimes.secondReset - now;
+                    if (firstDiff > 0 && secondDiff > 0) {
+                        // 两个都在未来，取最近的
+                        nextScheduledReset = firstDiff < secondDiff ? nextTimes.firstReset : nextTimes.secondReset;
+                    }
+                    else if (firstDiff > 0) {
+                        // 只有first在未来
+                        nextScheduledReset = nextTimes.firstReset;
+                    }
+                    else if (secondDiff > 0) {
+                        // 只有second在未来
+                        nextScheduledReset = nextTimes.secondReset;
+                    }
+                    else {
+                        // 两个都过了，取first（明天的）
+                        nextScheduledReset = nextTimes.firstReset;
+                    }
+                }
+                else {
+                    // 只有一个，就用那个
+                    nextScheduledReset = nextTimes.firstReset ?? nextTimes.secondReset;
+                }
                 return createSuccessResponse({
                     connected: accounts.length > 0,
-                    nextScheduledReset: nextTimes.firstReset,
+                    nextScheduledReset,
                     accountCount: accounts.length,
                 });
             }
