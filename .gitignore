@@ -57,3 +57,8 @@ Desktop.ini
 
 # 设计文档（不推送到远程）
 doc/
+
+# 详细文档（非必要，README已足够）
+USAGE.md
+API_CONFIG.md
+QUICK_START.md
