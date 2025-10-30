@@ -7,32 +7,132 @@
   <link rel="stylesheet" href="options.css">
 </head>
 <body>
-  <div class="container">
-    <!-- 侧边栏 -->
-    <aside class="sidebar">
-      <div class="logo">
-        <h1>88code 助手</h1>
-        <p class="version">v1.0.0</p>
+  <!-- 顶部导航 -->
+  <nav class="top-nav">
+    <div class="logo">
+      <div class="logo-icon">88</div>
+      <div class="logo-text">
+        <span class="logo-main">CODE</span>
+        <span class="logo-sub">RESET STUDIO</span>
+      </div>
+    </div>
+    <button class="back-to-hero" id="backToHeroBtn" style="display: none;">
+      <span>← 返回选择</span>
+    </button>
+    <div class="version-badge">
+      <span>v1.2.0</span>
+    </div>
+  </nav>
+
+  <!-- Hero Section - 卡片式导航 -->
+  <section class="hero">
+    <div class="hero-cards">
+      <div class="card" id="hero-card-1" data-tab="api">
+        <div class="card-wrapper">
+          <div class="flip-card-inner">
+            <div class="flip-card-front">
+              <div class="card-title">
+                <span>API</span>
+                <span>01</span>
+              </div>
+              <div class="card-emoji">🔑</div>
+              <div class="card-title">
+                <span>01</span>
+                <span>配置</span>
+              </div>
+            </div>
+            <div class="flip-card-back">
+              <div class="card-title">
+                <span>API</span>
+                <span>01</span>
+              </div>
+              <div class="card-copy">
+                <p>账号管理</p>
+                <p>密钥配置</p>
+                <p>连接测试</p>
+                <p>启用控制</p>
+              </div>
+              <div class="card-title">
+                <span>01</span>
+                <span>配置</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <nav class="nav">
-        <button class="nav-item active" data-tab="api">
-          <span class="nav-icon">🔑</span>
-          <span class="nav-label">API 配置</span>
-        </button>
-        <button class="nav-item" data-tab="schedule">
-          <span class="nav-icon">⏰</span>
-          <span class="nav-label">定时设置</span>
-        </button>
-        <button class="nav-item" data-tab="logs">
-          <span class="nav-icon">📋</span>
-          <span class="nav-label">日志记录</span>
-        </button>
-      </nav>
-    </aside>
+      <div class="card" id="hero-card-2" data-tab="schedule">
+        <div class="card-wrapper">
+          <div class="flip-card-inner">
+            <div class="flip-card-front">
+              <div class="card-title">
+                <span>定时</span>
+                <span>02</span>
+              </div>
+              <div class="card-emoji">⏰</div>
+              <div class="card-title">
+                <span>02</span>
+                <span>设置</span>
+              </div>
+            </div>
+            <div class="flip-card-back">
+              <div class="card-title">
+                <span>定时</span>
+                <span>02</span>
+              </div>
+              <div class="card-copy">
+                <p>重置时间</p>
+                <p>自动执行</p>
+                <p>通知提醒</p>
+                <p>时区配置</p>
+              </div>
+              <div class="card-title">
+                <span>02</span>
+                <span>设置</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-    <!-- 主内容区 -->
-    <main class="main">
+      <div class="card" id="hero-card-3" data-tab="logs">
+        <div class="card-wrapper">
+          <div class="flip-card-inner">
+            <div class="flip-card-front">
+              <div class="card-title">
+                <span>日志</span>
+                <span>03</span>
+              </div>
+              <div class="card-emoji">📋</div>
+              <div class="card-title">
+                <span>03</span>
+                <span>记录</span>
+              </div>
+            </div>
+            <div class="flip-card-back">
+              <div class="card-title">
+                <span>日志</span>
+                <span>03</span>
+              </div>
+              <div class="card-copy">
+                <p>操作记录</p>
+                <p>错误追踪</p>
+                <p>状态监控</p>
+                <p>历史查询</p>
+              </div>
+              <div class="card-title">
+                <span>03</span>
+                <span>记录</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 主内容区 -->
+  <main class="main">
       <!-- API 配置 Tab -->
       <section class="tab-content active" id="apiTab">
         <h2 class="tab-title">API 配置</h2>

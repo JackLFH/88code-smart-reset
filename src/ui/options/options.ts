@@ -8,9 +8,12 @@ export {}; // 使此文件成为模块，避免全局作用域冲突
 
 // ==================== DOM 元素 ====================
 
-// 导航
-const navItems = document.querySelectorAll('.nav-item');
+// 导航（Hero卡片）
+const heroCards = document.querySelectorAll('.hero-cards .card');
 const tabContents = document.querySelectorAll('.tab-content');
+const heroSection = document.querySelector('.hero') as HTMLElement;
+const backToHeroBtn = document.getElementById('backToHeroBtn') as HTMLButtonElement;
+const logoBtn = document.querySelector('.logo') as HTMLElement;
 
 // API 配置
 const apiForm = document.getElementById('apiForm') as HTMLFormElement;
@@ -80,13 +83,13 @@ const formatTimestamp = (timestamp: number): string => {
 
 // ==================== Tab 切换 ====================
 
-navItems.forEach((navItem) => {
-  navItem.addEventListener('click', () => {
-    const tabId = navItem.getAttribute('data-tab');
+heroCards.forEach((card) => {
+  card.addEventListener('click', () => {
+    const tabId = card.getAttribute('data-tab');
 
-    // 更新导航状态
-    navItems.forEach((item) => item.classList.remove('active'));
-    navItem.classList.add('active');
+    // 更新卡片状态
+    heroCards.forEach((item) => item.classList.remove('active'));
+    card.classList.add('active');
 
     // 更新内容显示
     tabContents.forEach((content) => {
@@ -96,12 +99,39 @@ navItems.forEach((navItem) => {
       }
     });
 
+    // 显示返回按钮
+    backToHeroBtn.style.display = 'block';
+
+    // 平滑滚动到主内容区
+    document.querySelector('.main')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
     // 如果切换到日志 Tab，加载日志
     if (tabId === 'logs') {
       loadLogs().catch(console.error);
     }
   });
 });
+
+// ==================== 返回Hero ====================
+
+const scrollToHero = () => {
+  // 滚动回Hero section
+  heroSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  // 隐藏返回按钮
+  setTimeout(() => {
+    backToHeroBtn.style.display = 'none';
+  }, 600);
+
+  // 清除卡片active状态
+  heroCards.forEach((item) => item.classList.remove('active'));
+};
+
+// 返回按钮点击事件
+backToHeroBtn.addEventListener('click', scrollToHero);
+
+// Logo点击事件（也可以返回）
+logoBtn.addEventListener('click', scrollToHero);
 
 // ==================== API 配置 ====================
 
@@ -197,6 +227,7 @@ const createAccountCard = (account: {
 }): HTMLElement => {
   const card = document.createElement('div');
   card.className = 'account-card';
+  card.dataset['enabled'] = account.enabled.toString();
 
   // 图标（显示账号名称首字母）
   const icon = document.createElement('div');
