@@ -124,8 +124,6 @@ npm run lint     # 代码检查
 MIT - 随便用，出事儿不负责 :)
 
 ## 作者
-
-Half open flowers
 - GitHub: [@JackLFH](https://github.com/JackLFH)
 - Email: 1816524875@qq.com
 
