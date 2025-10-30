@@ -134,6 +134,4 @@ Half open flowers
 - 灵感来自 [@Vulpecula-Studio](https://github.com/Vulpecula-Studio) 的项目
 - 感谢所有提建议的朋友
 
----
 
-**觉得有用的话给个Star呗 ⭐**
