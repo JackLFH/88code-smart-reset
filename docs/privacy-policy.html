@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>隐私政策 - 88code 自动重置助手</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.8;
+      color: #333;
+      background: #f9fafb;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 3rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      color: #111;
+    }
+
+    .meta {
+      color: #6b7280;
+      font-size: 0.875rem;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid #e5e7eb;
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+      color: #1f2937;
+    }
+
+    p {
+      margin-bottom: 1rem;
+    }
+
+    ul {
+      margin-left: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    li {
+      margin-bottom: 0.5rem;
+    }
+
+    .highlight {
+      background: #fef3c7;
+      padding: 0.125rem 0.5rem;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    .contact {
+      background: #f3f4f6;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-top: 2rem;
+    }
+
+    .contact h3 {
+      margin-bottom: 0.5rem;
+    }
+
+    a {
+      color: #3b82f6;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .section {
+      margin-bottom: 2rem;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      background: #10b981;
+      color: white;
+      border-radius: 999px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>隐私政策</h1>
+    <div class="meta">
+      <p><strong>应用名称</strong>: 88code 自动重置助手</p>
+      <p><strong>版本</strong>: v1.2.0</p>
+      <p><strong>生效日期</strong>: 2025年1月1日</p>
+      <p><strong>最后更新</strong>: 2025年1月1日</p>
+    </div>
+
+    <div class="section">
+      <h2>📌 总览</h2>
+      <p>
+        <span class="badge">✓</span> 本扩展<span class="highlight">不收集</span>任何用户个人数据<br>
+        <span class="badge">✓</span> 所有数据<span class="highlight">本地存储</span>在您的浏览器中<br>
+        <span class="badge">✓</span> API密钥使用<span class="highlight">军工级加密</span>算法保护<br>
+        <span class="badge">✓</span> <span class="highlight">开源代码</span>，随时可审计
+      </p>
+    </div>
+
+    <div class="section">
+      <h2>1. 数据收集</h2>
+      <p>
+        <strong>本扩展不收集、不存储、不传输任何用户个人数据。</strong>
+      </p>
+      <p>
+        我们不会收集以下任何信息：
+      </p>
+      <ul>
+        <li>个人身份信息（姓名、邮箱、电话等）</li>
+        <li>浏览历史或网页访问记录</li>
+        <li>地理位置信息</li>
+        <li>设备信息或指纹</li>
+        <li>任何其他个人隐私数据</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>2. 数据存储</h2>
+      <p>
+        所有数据均通过 Chrome Storage API 存储在<strong>您的浏览器本地</strong>，包括：
+      </p>
+      <ul>
+        <li><strong>88code API密钥</strong>：使用 AES-GCM 算法加密后存储</li>
+        <li><strong>账号配置</strong>：账号名称、启用状态、创建时间等</li>
+        <li><strong>定时设置</strong>：重置时间、时区、通知偏好等</li>
+        <li><strong>操作日志</strong>：本地记录操作历史，方便追溯</li>
+      </ul>
+      <p>
+        <strong>重要</strong>：这些数据仅存储在您的设备上，不会上传到任何服务器。
+      </p>
+    </div>
+
+    <div class="section">
+      <h2>3. 数据加密</h2>
+      <p>
+        您的 API 密钥使用 <strong>AES-GCM 加密算法</strong>进行加密存储，具体包括：
+      </p>
+      <ul>
+        <li>256位密钥长度</li>
+        <li>随机生成的 IV（初始化向量）</li>
+        <li>加密认证标签（确保数据完整性）</li>
+        <li>绝不以明文形式存储</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>4. 网络请求</h2>
+      <p>
+        本扩展<strong>仅向 88code.org 官方API</strong>发送请求，用于：
+      </p>
+      <ul>
+        <li>测试API密钥有效性</li>
+        <li>获取账号使用情况</li>
+        <li>执行订阅配额重置</li>
+      </ul>
+      <p>
+        <strong>我们不会将您的数据发送到任何第三方服务器。</strong>
+      </p>
+    </div>
+
+    <div class="section">
+      <h2>5. 权限说明</h2>
+      <p>本扩展请求的权限及用途：</p>
+      <ul>
+        <li><strong>storage</strong>: 在浏览器本地存储账号配置和设置</li>
+        <li><strong>alarms</strong>: 实现定时自动重置功能</li>
+        <li><strong>notifications</strong>: 显示重置成功/失败的桌面通知</li>
+        <li><strong>host_permissions (88code.org)</strong>: 调用88code官方API接口</li>
+      </ul>
+      <p>
+        我们<strong>不会</strong>请求以下敏感权限：
+      </p>
+      <ul>
+        <li>❌ 访问所有网站数据</li>
+        <li>❌ 读取浏览历史</li>
+        <li>❌ 修改网页内容</li>
+        <li>❌ 管理下载内容</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>6. 数据安全承诺</h2>
+      <ul>
+        <li>✅ 所有数据仅存储在用户本地浏览器</li>
+        <li>✅ API密钥使用工业级加密算法（AES-GCM）</li>
+        <li>✅ 不与任何第三方共享数据</li>
+        <li>✅ 开源代码，任何人都可以审计</li>
+        <li>✅ 符合GDPR等国际隐私法规</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>7. 用户控制</h2>
+      <p>您拥有对数据的完全控制权，可以随时：</p>
+      <ul>
+        <li>在扩展设置中删除已保存的账号</li>
+        <li>清空所有操作日志记录</li>
+        <li>卸载扩展（所有本地数据将被自动删除）</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>8. 儿童隐私</h2>
+      <p>
+        本扩展不针对13岁以下儿童。我们不会故意收集儿童的个人信息。
+      </p>
+    </div>
+
+    <div class="section">
+      <h2>9. 政策更新</h2>
+      <p>
+        本隐私政策可能会不定期更新。重大变更将通过以下方式通知用户：
+      </p>
+      <ul>
+        <li>在扩展更新日志中说明</li>
+        <li>在GitHub仓库中发布公告</li>
+        <li>更新本页面的"最后更新"日期</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>10. 开源透明</h2>
+      <p>
+        本扩展采用 <strong>MIT 开源协议</strong>，所有源代码托管在 GitHub：<br>
+        <a href="https://github.com/JackLFH/88code-smart-reset" target="_blank">
+          https://github.com/JackLFH/88code-smart-reset
+        </a>
+      </p>
+      <p>
+        我们欢迎任何人审计代码，提出安全建议，或贡献改进。
+      </p>
+    </div>
+
+    <div class="contact">
+      <h3>📞 联系方式</h3>
+      <p>
+        如有隐私相关问题或疑虑，请通过以下方式联系我们：
+      </p>
+      <ul>
+        <li><strong>Email</strong>: <a href="mailto:1816524875@qq.com">1816524875@qq.com</a></li>
+        <li><strong>GitHub</strong>: <a href="https://github.com/JackLFH/88code-smart-reset/issues" target="_blank">提交Issue</a></li>
+        <li><strong>作者</strong>: Half open flowers</li>
+      </ul>
+    </div>
+
+    <div class="meta" style="border-top: 2px solid #e5e7eb; margin-top: 3rem; padding-top: 1rem;">
+      <p style="text-align: center; color: #6b7280;">
+        © 2025 88code Smart Reset. All rights reserved.<br>
+        本隐私政策最后更新于 2025年1月1日
+      </p>
+    </div>
+  </div>
+</body>
+</html>
