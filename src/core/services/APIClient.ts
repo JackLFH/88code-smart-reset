@@ -182,6 +182,7 @@ export class APIClient {
         status: response.status,
         statusText: response.statusText,
         ok: response.ok,
+        headers: Object.fromEntries(response.headers.entries()),
       });
 
       // 🔍 直接输出到console进行调试
@@ -220,8 +221,68 @@ export class APIClient {
         );
       }
 
-      // 解析响应
-      const responseData = await response.json();
+      // 检查是否有响应体
+      const contentLength = response.headers.get('content-length');
+      const contentType = response.headers.get('content-type');
+
+      // 如果是204 No Content或者content-length为0，返回空响应
+      if (response.status === 204 || contentLength === '0') {
+        console.log('[DEBUG] 空响应体 (204 或 content-length=0)');
+        return {} as T;
+      }
+
+      // 克隆response以便可以多次读取
+      const responseClone = response.clone();
+
+      // 先读取原始文本用于调试
+      let rawText = '';
+      try {
+        rawText = await responseClone.text();
+        console.log('[DEBUG] 原始响应文本:', {
+          endpoint,
+          status: response.status,
+          contentType,
+          textLength: rawText.length,
+          textPreview: rawText.substring(0, 500),
+        });
+      } catch (textError) {
+        console.error('[DEBUG] 读取响应文本失败:', textError);
+      }
+
+      // 如果响应体为空，返回空对象
+      if (!rawText || rawText.trim() === '') {
+        console.log('[DEBUG] 响应体为空，返回空对象');
+        return {} as T;
+      }
+
+      // 解析响应 - 添加错误处理
+      let responseData: T;
+      try {
+        responseData = await response.json();
+      } catch (jsonError) {
+        // JSON解析失败
+        console.error('[DEBUG] JSON解析失败:', {
+          endpoint,
+          status: response.status,
+          contentType,
+          rawText,
+          error: jsonError,
+        });
+
+        await Logger.error('API_JSON_PARSE_ERROR', `响应解析失败 (${endpoint})`, undefined, {
+          status: response.status,
+          statusText: response.statusText,
+          contentType,
+          rawTextPreview: rawText.substring(0, 200),
+          errorMessage: jsonError instanceof Error ? jsonError.message : String(jsonError),
+        });
+
+        throw createError(
+          'JSON_PARSE_ERROR',
+          'API响应格式错误，无法解析JSON',
+          { status: response.status, contentType, rawText: rawText.substring(0, 200) },
+        );
+      }
 
       // 🔍 输出成功响应的数据
       console.log('[DEBUG] API响应成功:', {
@@ -230,7 +291,7 @@ export class APIClient {
         data: responseData,
       });
 
-      return responseData as T;
+      return responseData;
     } catch (error) {
       // 🔍 直接输出错误到console
       console.error('[DEBUG] API请求异常:', {
