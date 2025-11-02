@@ -225,10 +225,13 @@ export class APIClient {
       const contentLength = response.headers.get('content-length');
       const contentType = response.headers.get('content-type');
 
-      // 如果是204 No Content或者content-length为0，返回空响应
+      // 如果是204 No Content或者content-length为0，返回默认成功响应
       if (response.status === 204 || contentLength === '0') {
-        console.log('[DEBUG] 空响应体 (204 或 content-length=0)');
-        return {} as T;
+        console.log('[DEBUG] 空响应体 (204 或 content-length=0)，返回默认成功响应');
+        return {
+          success: true,
+          message: '操作成功',
+        } as T;
       }
 
       // 克隆response以便可以多次读取
@@ -249,10 +252,13 @@ export class APIClient {
         console.error('[DEBUG] 读取响应文本失败:', textError);
       }
 
-      // 如果响应体为空，返回空对象
+      // 如果响应体为空，返回默认成功响应
       if (!rawText || rawText.trim() === '') {
-        console.log('[DEBUG] 响应体为空，返回空对象');
-        return {} as T;
+        console.log('[DEBUG] 响应体为空，返回默认成功响应');
+        return {
+          success: true,
+          message: '操作成功',
+        } as T;
       }
 
       // 解析响应 - 添加错误处理
