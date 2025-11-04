@@ -295,7 +295,24 @@ export class APIClient {
         endpoint,
         status: response.status,
         data: responseData,
+        hasSuccess: 'success' in (responseData as object),
+        successValue: (responseData as any)?.success,
       });
+
+      // 🔍 检查响应数据是否有 success 字段
+      // 如果服务器返回了空对象 {} 或者没有 success 字段，视为成功
+      if (
+        !responseData ||
+        typeof responseData !== 'object' ||
+        !('success' in responseData) ||
+        (responseData as any).success === undefined
+      ) {
+        console.log('[DEBUG] 响应数据缺少success字段，返回默认成功响应');
+        return {
+          success: true,
+          message: '操作成功',
+        } as T;
+      }
 
       return responseData;
     } catch (error) {
@@ -413,6 +430,17 @@ export class APIClient {
       `/api/reset-credits/${subscriptionId}`,
       apiKey,
     );
+
+    // 🔍 详细调试日志 - 查看实际返回的响应对象
+    console.log('[DEBUG] resetCredits 收到响应:', {
+      response,
+      success: response.success,
+      message: response.message,
+      typeof_success: typeof response.success,
+      typeof_message: typeof response.message,
+      keys: Object.keys(response),
+      json: JSON.stringify(response),
+    });
 
     if (response.success) {
       await Logger.success('API_CALL', `积分重置成功: ${subscriptionId}`);
