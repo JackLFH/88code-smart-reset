@@ -139,6 +139,7 @@ export class APIClient {
                 status: response.status,
                 statusText: response.statusText,
                 ok: response.ok,
+                headers: Object.fromEntries(response.headers.entries()),
             });
             // 🔍 直接输出到console进行调试
             console.log(`[DEBUG] 响应状态: ${response.status} ${response.statusText}, ok=${response.ok}`);
@@ -167,14 +168,99 @@ export class APIClient {
                     ...errorData.details,
                 });
             }
-            // 解析响应
-            const responseData = await response.json();
+            // 检查是否有响应体
+            const contentLength = response.headers.get('content-length');
+            const contentType = response.headers.get('content-type');
+            // 如果是204 No Content或者content-length为0，返回默认成功响应
+            if (response.status === 204 || contentLength === '0') {
+                console.log('[DEBUG] 空响应体 (204 或 content-length=0)，返回默认成功响应');
+                return {
+                    success: true,
+                    message: '操作成功',
+                };
+            }
+            // 克隆response以便可以多次读取
+            const responseClone = response.clone();
+            // 先读取原始文本用于调试
+            let rawText = '';
+            try {
+                rawText = await responseClone.text();
+                console.log('[DEBUG] 原始响应文本:', {
+                    endpoint,
+                    status: response.status,
+                    contentType,
+                    textLength: rawText.length,
+                    textPreview: rawText.substring(0, 500),
+                });
+            }
+            catch (textError) {
+                console.error('[DEBUG] 读取响应文本失败:', textError);
+            }
+            // 如果响应体为空，返回默认成功响应
+            if (!rawText || rawText.trim() === '') {
+                console.log('[DEBUG] 响应体为空，返回默认成功响应');
+                return {
+                    success: true,
+                    message: '操作成功',
+                };
+            }
+            // 解析响应 - 添加错误处理
+            let responseData;
+            try {
+                responseData = await response.json();
+            }
+            catch (jsonError) {
+                // JSON解析失败
+                console.error('[DEBUG] JSON解析失败:', {
+                    endpoint,
+                    status: response.status,
+                    contentType,
+                    rawText,
+                    error: jsonError,
+                });
+                await Logger.error('API_JSON_PARSE_ERROR', `响应解析失败 (${endpoint})`, undefined, {
+                    status: response.status,
+                    statusText: response.statusText,
+                    contentType,
+                    rawTextPreview: rawText.substring(0, 200),
+                    errorMessage: jsonError instanceof Error ? jsonError.message : String(jsonError),
+                });
+                throw createError('JSON_PARSE_ERROR', 'API响应格式错误，无法解析JSON', { status: response.status, contentType, rawText: rawText.substring(0, 200) });
+            }
             // 🔍 输出成功响应的数据
             console.log('[DEBUG] API响应成功:', {
                 endpoint,
                 status: response.status,
                 data: responseData,
+                hasSuccess: 'success' in responseData,
+                successValue: responseData?.success,
             });
+            // 🔍 检查是否是空对象（没有任何字段，或只有success字段但值为undefined）
+            // 注意：不能简单检查是否有success字段，因为很多API（如getUsage）返回的数据本身就没有success字段
+            const keys = Object.keys(responseData);
+            const isEmpty = keys.length === 0;
+            const hasOnlyUndefinedSuccess = keys.length === 1 &&
+                'success' in responseData &&
+                responseData.success === undefined;
+            if (!responseData || typeof responseData !== 'object' || isEmpty || hasOnlyUndefinedSuccess) {
+                console.log('[DEBUG] 响应数据为空对象，返回默认成功响应', {
+                    isEmpty,
+                    hasOnlyUndefinedSuccess,
+                    keys,
+                });
+                return {
+                    success: true,
+                    message: '操作成功',
+                };
+            }
+            // 🔍 特殊处理：如果响应有success字段但值为undefined，替换为true
+            if ('success' in responseData && responseData.success === undefined) {
+                console.log('[DEBUG] success字段为undefined，设置为true');
+                responseData.success = true;
+                if (!responseData.message) {
+                    responseData.message = '操作成功';
+                }
+            }
             return responseData;
         }
         catch (error) {
@@ -253,6 +339,16 @@ export class APIClient {
     async getUsage(apiKey) {
         await Logger.info('API_CALL', '获取使用情况');
         const response = await this.request('POST', '/api/usage', apiKey);
+        // 🔍 调试：查看getUsage返回的原始响应
+        console.log('[DEBUG] APIClient.getUsage 返回的原始响应:', {
+            response,
+            currentCredits: response.currentCredits,
+            creditLimit: response.creditLimit,
+            hasCurrentCredits: 'currentCredits' in response,
+            hasCreditLimit: 'creditLimit' in response,
+            responseKeys: Object.keys(response),
+            responseJSON: JSON.stringify(response),
+        });
         await Logger.success('API_CALL', '获取使用情况成功');
         return response;
     }
@@ -265,6 +361,16 @@ export class APIClient {
     async resetCredits(apiKey, subscriptionId) {
         await Logger.info('API_CALL', `重置积分: ${subscriptionId}`);
         const response = await this.request('POST', `/api/reset-credits/${subscriptionId}`, apiKey);
+        // 🔍 详细调试日志 - 查看实际返回的响应对象
+        console.log('[DEBUG] resetCredits 收到响应:', {
+            response,
+            success: response.success,
+            message: response.message,
+            typeof_success: typeof response.success,
+            typeof_message: typeof response.message,
+            keys: Object.keys(response),
+            json: JSON.stringify(response),
+        });
         if (response.success) {
             await Logger.success('API_CALL', `积分重置成功: ${subscriptionId}`);
         }

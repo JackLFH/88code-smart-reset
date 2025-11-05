@@ -92,12 +92,30 @@ const updateUsageDisplay = (usage) => {
     usageLoading.classList.add('hidden');
     usageError.classList.add('hidden');
     usageContent.classList.remove('hidden');
+    // 🔍 调试：查看popup收到的数据
+    console.log('[DEBUG] popup updateUsageDisplay 收到数据:', {
+        usage,
+        totalQuotaGb: usage.totalQuotaGb,
+        usedGb: usage.usedGb,
+        remainingGb: usage.remainingGb,
+        usagePercentage: usage.usagePercentage,
+    });
     // 更新数值（添加防御性检查）
     const percentage = Math.min(Math.max(usage.usagePercentage ?? 0, 0), 100);
+    const usedText = formatCredits(usage.usedGb);
+    const totalText = formatCredits(usage.totalQuotaGb);
+    const remainingText = formatCredits(usage.remainingGb);
+    // 🔍 调试：查看格式化后的文本
+    console.log('[DEBUG] popup 格式化后的显示文本:', {
+        percentage: percentage.toFixed(1) + '%',
+        usedText,
+        totalText,
+        remainingText,
+    });
     gaugePercentage.textContent = Number.isNaN(percentage) ? '--.--%' : `${percentage.toFixed(1)}%`;
-    usedValue.textContent = formatCredits(usage.usedGb);
-    totalValue.textContent = formatCredits(usage.totalQuotaGb);
-    remainingValue.textContent = formatCredits(usage.remainingGb);
+    usedValue.textContent = usedText;
+    totalValue.textContent = totalText;
+    remainingValue.textContent = remainingText;
     // 更新圆形进度条
     const circumference = 2 * Math.PI * 80; // r=80
     const offset = circumference - (percentage / 100) * circumference;

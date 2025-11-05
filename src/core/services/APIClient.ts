@@ -299,19 +299,34 @@ export class APIClient {
         successValue: (responseData as any)?.success,
       });
 
-      // 🔍 检查响应数据是否有 success 字段
-      // 如果服务器返回了空对象 {} 或者没有 success 字段，视为成功
-      if (
-        !responseData ||
-        typeof responseData !== 'object' ||
-        !('success' in responseData) ||
-        (responseData as any).success === undefined
-      ) {
-        console.log('[DEBUG] 响应数据缺少success字段，返回默认成功响应');
+      // 🔍 检查是否是空对象（没有任何字段，或只有success字段但值为undefined）
+      // 注意：不能简单检查是否有success字段，因为很多API（如getUsage）返回的数据本身就没有success字段
+      const keys = Object.keys(responseData as object);
+      const isEmpty = keys.length === 0;
+      const hasOnlyUndefinedSuccess =
+        keys.length === 1 &&
+        'success' in (responseData as object) &&
+        (responseData as any).success === undefined;
+
+      if (!responseData || typeof responseData !== 'object' || isEmpty || hasOnlyUndefinedSuccess) {
+        console.log('[DEBUG] 响应数据为空对象，返回默认成功响应', {
+          isEmpty,
+          hasOnlyUndefinedSuccess,
+          keys,
+        });
         return {
           success: true,
           message: '操作成功',
         } as T;
+      }
+
+      // 🔍 特殊处理：如果响应有success字段但值为undefined，替换为true
+      if ('success' in (responseData as object) && (responseData as any).success === undefined) {
+        console.log('[DEBUG] success字段为undefined，设置为true');
+        (responseData as any).success = true;
+        if (!(responseData as any).message) {
+          (responseData as any).message = '操作成功';
+        }
       }
 
       return responseData;
@@ -411,6 +426,17 @@ export class APIClient {
     await Logger.info('API_CALL', '获取使用情况');
 
     const response = await this.request<UsageResponse>('POST', '/api/usage', apiKey);
+
+    // 🔍 调试：查看getUsage返回的原始响应
+    console.log('[DEBUG] APIClient.getUsage 返回的原始响应:', {
+      response,
+      currentCredits: response.currentCredits,
+      creditLimit: response.creditLimit,
+      hasCurrentCredits: 'currentCredits' in response,
+      hasCreditLimit: 'creditLimit' in response,
+      responseKeys: Object.keys(response),
+      responseJSON: JSON.stringify(response),
+    });
 
     await Logger.success('API_CALL', '获取使用情况成功');
     return response;

@@ -122,6 +122,14 @@ async function handleMessage(
 
         const usage = await apiClient.getUsage(firstAccount.apiKey);
 
+        // 🔍 调试：查看API返回的原始数据
+        console.log('[DEBUG] getUsage API原始响应:', {
+          currentCredits: usage.currentCredits,
+          creditLimit: usage.creditLimit,
+          subscriptionName: usage.subscriptionName,
+          fullUsage: usage,
+        });
+
         // 转换为前端期望的格式（88code使用Credits，不是GB）
         // 注意：currentCredits是剩余积分，不是已使用！
         const remainingCredits = usage.currentCredits ?? 0;
@@ -129,12 +137,25 @@ async function handleMessage(
         const usedCredits = Math.max(0, totalCredits - remainingCredits);
         const usagePercentage = totalCredits > 0 ? (usedCredits / totalCredits) * 100 : 0;
 
-        return createSuccessResponse({
+        // 🔍 调试：查看计算后的数据
+        console.log('[DEBUG] getUsage 计算结果:', {
+          remainingCredits,
+          totalCredits,
+          usedCredits,
+          usagePercentage: usagePercentage.toFixed(2) + '%',
+        });
+
+        const result = {
           totalQuotaGb: totalCredits,      // 总配额
           usedGb: usedCredits,             // 已使用 = 总额 - 剩余
           remainingGb: remainingCredits,   // 剩余积分
           usagePercentage,                 // 使用百分比
-        });
+        };
+
+        // 🔍 调试：查看返回给前端的数据
+        console.log('[DEBUG] getUsage 返回给前端的数据:', result);
+
+        return createSuccessResponse(result);
       }
 
       case 'GET_ACCOUNTS': {
