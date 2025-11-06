@@ -62,3 +62,6 @@ doc/
 USAGE.md
 API_CONFIG.md
 QUICK_START.md
+
+# Bruno: Protect production credentials
+bruno-api/environments/production.bru

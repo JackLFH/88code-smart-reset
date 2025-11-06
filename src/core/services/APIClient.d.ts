@@ -57,6 +57,21 @@ export declare class APIClient {
      */
     testConnection(apiKey: string): Promise<boolean>;
     /**
+     * 测试特定API Key并返回详细结果
+     * @param apiKey API 密钥
+     * @returns 详细测试结果
+     */
+    testSpecificKey(apiKey: string): Promise<{
+        success: boolean;
+        errorType?: 'NETWORK_ERROR' | 'AUTH_ERROR' | 'PERMISSION_ERROR' | 'SERVER_ERROR' | 'UNKNOWN_ERROR';
+        message: string;
+        details?: {
+            error?: string;
+            statusCode?: number;
+            suggestion?: string;
+        };
+    }>;
+    /**
      * 获取速率限制状态
      */
     getRateLimitStatus(): {
