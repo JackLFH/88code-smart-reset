@@ -1,0 +1,29 @@
+meta {
+  name: 88code Smart Reset API
+  type: collection
+}
+
+docs {
+  # 88code Smart Reset API
+
+  This collection provides endpoints to:
+  - Test connection and get usage information
+  - Retrieve subscription list
+  - Reset credits for subscriptions with intelligent business logic
+
+  ## Authentication
+  - API Key sent in Authorization header (no Bearer prefix)
+  - Set your API key in the selected environment
+
+  ## Usage
+  1. Select environment (local)
+  2. Set your 88code API key in environment variables
+  3. Start with "Test Connection" to verify setup
+  4. Use "Auto Reset Credits" for intelligent credit reset
+
+  ## Features
+  - **Smart Reset Logic**: Automatically selects eligible subscriptions
+  - **PAYGO Protection**: Skips PAYGO subscriptions to prevent charges
+  - **Cooldown Management**: Enforces 5-hour cooldown between resets
+  - **Business Rules**: Only resets MONTHLY subscriptions with sufficient reset times
+}

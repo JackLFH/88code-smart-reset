@@ -19,8 +19,8 @@ const logoBtn = document.querySelector('.logo') as HTMLElement;
 const apiForm = document.getElementById('apiForm') as HTMLFormElement;
 const accountNameInput = document.getElementById('accountName') as HTMLInputElement;
 const apiKeyInput = document.getElementById('apiKey') as HTMLInputElement;
-const testConnectionBtn = document.getElementById('testConnectionBtn') as HTMLButtonElement;
 const apiAlert = document.getElementById('apiAlert') as HTMLElement;
+const saveConfigBtn = document.getElementById('saveConfigBtn') as HTMLButtonElement;
 
 // 定时设置
 const scheduleForm = document.getElementById('scheduleForm') as HTMLFormElement;
@@ -136,7 +136,7 @@ logoBtn.addEventListener('click', scrollToHero);
 // ==================== API 配置 ====================
 
 /**
- * 保存 API 配置
+ * 保存 API 配置（整合测试连接功能）
  */
 apiForm.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -149,38 +149,111 @@ apiForm.addEventListener('submit', async (e) => {
     return;
   }
 
+  // 输入验证
+  const validation = validateInputs();
+  if (!validation.isValid) {
+    showAlert(apiAlert, validation.message, 'error');
+    return;
+  }
+
+  // 显示测试中状态
+  saveConfigBtn.disabled = true;
+  saveConfigBtn.classList.add('loading');
+  saveConfigBtn.textContent = '测试连接中...';
+  apiAlert.classList.add('hidden');
+
   try {
+    // 先测试API Key连接
+    const testResult = await sendMessage<{
+      success: boolean;
+      errorType?: string;
+      message: string;
+      details?: {
+        error?: string;
+        statusCode?: number;
+        suggestion?: string;
+      };
+    }>('TEST_API_KEY', { apiKey });
+
+    if (!testResult.success) {
+      // 测试失败，显示错误信息
+      let errorMessage = testResult.message;
+      let suggestion = '';
+
+      switch (testResult.errorType) {
+        case 'NETWORK_ERROR':
+          suggestion = testResult.details?.suggestion || '请检查网络连接';
+          errorMessage = `${testResult.message} - ${suggestion}`;
+          break;
+        case 'AUTH_ERROR':
+          suggestion = testResult.details?.suggestion || '请检查API Key是否正确';
+          errorMessage = `${testResult.message} - ${suggestion}`;
+          break;
+        case 'PERMISSION_ERROR':
+          suggestion = testResult.details?.suggestion || '请确保API Key有足够权限';
+          errorMessage = `${testResult.message} - ${suggestion}`;
+          break;
+        case 'SERVER_ERROR':
+          suggestion = testResult.details?.suggestion || '请稍后重试';
+          errorMessage = `${testResult.message} - ${suggestion}`;
+          break;
+        default:
+          errorMessage = testResult.message;
+          if (testResult.details?.suggestion) {
+            errorMessage += ` - ${testResult.details.suggestion}`;
+          }
+      }
+
+      showAlert(apiAlert, `连接测试失败: ${errorMessage}`, 'error');
+      return;
+    }
+
+    // 测试成功，开始保存配置
+    saveConfigBtn.textContent = '保存中...';
+
     await sendMessage('SAVE_API_KEY', { accountName, apiKey });
-    showAlert(apiAlert, 'API 密钥已保存', 'success');
+    showAlert(apiAlert, `${testResult.message} ✅ 配置已成功保存`, 'success');
     apiForm.reset();
-    // 重新加载账号列表
+
+    // 重新加载配置列表
     loadAccountList().catch(console.error);
   } catch (error) {
-    showAlert(apiAlert, error instanceof Error ? error.message : '保存失败', 'error');
+    const errorMsg = error instanceof Error ? error.message : '保存失败';
+    showAlert(apiAlert, errorMsg, 'error');
+  } finally {
+    // 恢复按钮状态
+    saveConfigBtn.disabled = false;
+    saveConfigBtn.classList.remove('loading');
+    saveConfigBtn.textContent = '保存配置';
   }
 });
 
 /**
- * 测试连接
+ * 验证输入格式（只在需要时调用）
  */
-testConnectionBtn.addEventListener('click', async () => {
-  try {
-    const result = await sendMessage<{ connected: boolean }>('TEST_CONNECTION');
+function validateInputs(): { isValid: boolean; message: string } {
+  const accountName = accountNameInput.value.trim();
+  const apiKey = apiKeyInput.value.trim();
 
-    if (result.connected) {
-      showAlert(apiAlert, '连接成功！', 'success');
-    } else {
-      showAlert(apiAlert, '连接失败，请检查 API 密钥', 'error');
-    }
-  } catch (error) {
-    showAlert(apiAlert, error instanceof Error ? error.message : '测试失败', 'error');
+  if (!accountName) {
+    return { isValid: false, message: '请输入配置名称' };
   }
-});
+
+  if (!apiKey) {
+    return { isValid: false, message: '请输入 API 密钥' };
+  }
+
+  if (apiKey.length < 20) {
+    return { isValid: false, message: 'API 密钥格式不正确，至少需要20个字符' };
+  }
+
+  return { isValid: true, message: '' };
+}
 
 // ==================== 账号列表 ====================
 
 /**
- * 加载账号列表
+ * 加载配置列表
  */
 const loadAccountList = async (): Promise<void> => {
   accountList.innerHTML = '<div class="account-list-loading">加载中...</div>';
@@ -197,11 +270,11 @@ const loadAccountList = async (): Promise<void> => {
     }>>('GET_ACCOUNTS');
 
     if (accounts.length === 0) {
-      accountList.innerHTML = '<div class="account-list-empty">暂无账号，请在上方添加</div>';
+      accountList.innerHTML = '<div class="account-list-empty">暂无配置，请在上方添加</div>';
       return;
     }
 
-    // 渲染账号列表
+    // 渲染配置列表
     accountList.innerHTML = '';
     accounts.forEach((account) => {
       const card = createAccountCard(account);
@@ -209,12 +282,12 @@ const loadAccountList = async (): Promise<void> => {
     });
   } catch (error) {
     accountList.innerHTML = '<div class="account-list-empty">加载失败</div>';
-    console.error('加载账号列表失败:', error);
+    console.error('加载配置列表失败:', error);
   }
 };
 
 /**
- * 创建账号卡片
+ * 创建配置卡片
  */
 const createAccountCard = (account: {
   id: string;
@@ -229,16 +302,16 @@ const createAccountCard = (account: {
   card.className = 'account-card';
   card.dataset['enabled'] = account.enabled.toString();
 
-  // 图标（显示账号名称首字母）
+  // 图标（显示配置名称首字母）
   const icon = document.createElement('div');
   icon.className = 'account-icon';
   icon.textContent = account.name.charAt(0).toUpperCase();
 
-  // 账号信息
+  // 配置信息
   const info = document.createElement('div');
   info.className = 'account-info';
 
-  // 账号名称和状态
+  // 配置名称和状态
   const nameDiv = document.createElement('div');
   nameDiv.className = 'account-name';
 
@@ -298,7 +371,7 @@ const createAccountCard = (account: {
 };
 
 /**
- * 切换账号启用状态
+ * 切换配置启用状态
  */
 const toggleAccount = async (accountId: string, enabled: boolean): Promise<void> => {
   try {
@@ -310,16 +383,16 @@ const toggleAccount = async (accountId: string, enabled: boolean): Promise<void>
 };
 
 /**
- * 删除账号
+ * 删除配置
  */
 const deleteAccount = async (accountId: string, accountName: string): Promise<void> => {
-  if (!confirm(`确定要删除账号"${accountName}"吗？\n\n此操作不可撤销。`)) {
+  if (!confirm(`确定要删除配置"${accountName}"吗？\n\n此操作不可撤销。`)) {
     return;
   }
 
   try {
     await sendMessage('DELETE_ACCOUNT', { accountId });
-    showAlert(apiAlert, '账号已删除', 'success');
+    showAlert(apiAlert, '配置已删除', 'success');
     loadAccountList().catch(console.error);
   } catch (error) {
     showAlert(apiAlert, error instanceof Error ? error.message : '删除失败', 'error');

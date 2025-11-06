@@ -394,9 +394,34 @@ span {
   transition: all var(--transition-base);
 }
 
-.card-copy p:hover {
-  background: var(--color-bg-primary);
-  transform: translateX(5px);
+/* 移除鼠标悬停样式变化 - 按照要求保持静态显示 */
+
+/* 卡片底部按钮样式 */
+.card-action {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--space-md) var(--space-lg);
+  background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  color: var(--dark);
+  border-radius: var(--radius-lg);
+  font-weight: 700;
+  font-size: 1.5rem; /* 原始字体的1.5倍，增大50% */
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 0 4px 12px rgba(229, 217, 246, 0.3);
+  transition: all var(--transition-base) var(--ease-out-quad);
+  cursor: pointer;
+  margin-top: var(--space-md);
+}
+
+.card-action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(229, 217, 246, 0.4);
+}
+
+.card-action:active {
+  transform: translateY(0);
 }
 
 /* ==================== 主内容区 ==================== */
@@ -572,6 +597,53 @@ span {
   background: var(--accent-1);
   color: var(--dark);
   transform: translateY(-3px);
+}
+
+/* 按钮禁用状态 */
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.btn:disabled:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.btn:disabled::before {
+  animation: none !important;
+}
+
+/* 测试中状态 */
+.btn.loading {
+  position: relative;
+  color: transparent;
+  pointer-events: none;
+}
+
+.btn.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
 }
 
 /* ==================== 提示框 ==================== */

@@ -23,6 +23,16 @@ const SENSITIVE_PATTERNS = {
 };
 // ==================== Logger 类 ====================
 /**
+ * 需要静默的消息类型（不记录到日志）
+ */
+const SILENT_MESSAGE_TYPES = [
+    'GET_LOGS', // 获取日志（页面切换/刷新）
+    'GET_USAGE', // 获取使用量（页面刷新）
+    'GET_ACCOUNTS', // 获取账号列表（页面切换）
+    'GET_CONFIG', // 获取配置（页面加载）
+    'GET_STATUS', // 获取状态（页面刷新）
+];
+/**
  * 日志工具类
  */
 export class Logger {
@@ -70,9 +80,28 @@ export class Logger {
         return sanitized;
     }
     /**
+     * 检查操作是否应该被静默
+     */
+    static shouldSilence(operation, message) {
+        // 如果操作类型是MESSAGE_RECEIVED，检查消息类型
+        if (operation === 'MESSAGE_RECEIVED') {
+            // 从消息中提取消息类型
+            const messageMatch = message.match(/收到消息: ([A-Z_]+)/);
+            if (messageMatch) {
+                const messageType = messageMatch[1];
+                return SILENT_MESSAGE_TYPES.includes(messageType);
+            }
+        }
+        return false;
+    }
+    /**
      * 记录日志
      */
     static async log(level, operation, message, accountId, details) {
+        // 检查是否应该静默此日志
+        if (this.shouldSilence(operation, message)) {
+            return;
+        }
         const log = {
             id: crypto.randomUUID(),
             timestamp: Date.now(),

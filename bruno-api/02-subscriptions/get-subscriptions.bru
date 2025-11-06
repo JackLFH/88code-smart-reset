@@ -1,0 +1,53 @@
+meta {
+  name: Get Subscriptions
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/subscription
+  body: json { { } }
+  headers: {
+    Content-Type: application/json
+    Authorization: {{apiKey}}
+  }
+}
+
+docs {
+  Get list of all subscriptions
+
+  This endpoint retrieves all subscriptions associated with your account, including
+  details about billing, usage, and reset capabilities.
+
+  Expected Response:
+  ```json
+  {
+    "success": true,
+    "data": [
+      {
+        "id": "subscription_id",
+        "billingType": "MONTHLY",
+        "status": "active",
+        "resetTimes": 3,
+        "lastResetAt": "2025-01-01T00:00:00Z"
+      }
+    ]
+  }
+  ```
+}
+
+tests {
+  test("Status code is 200", function() {
+    res.expect.status(200);
+  });
+
+  test("Response is JSON", function() {
+    res.expect.contentType("application/json");
+  });
+
+  test("Response has data array", function() {
+    const body = res.expect.json();
+    expect(body).to.have.property('data');
+    expect(body.data).to.be.an('array');
+  });
+}

@@ -18,6 +18,10 @@ export declare class Logger {
      */
     private static sanitizeObject;
     /**
+     * 检查操作是否应该被静默
+     */
+    private static shouldSilence;
+    /**
      * 记录日志
      */
     private static log;

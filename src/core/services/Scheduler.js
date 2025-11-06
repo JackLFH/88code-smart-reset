@@ -136,28 +136,91 @@ export class Scheduler {
         await Logger.info('SCHEDULED_RESET', `准备重置 ${enabledAccounts.length} 个账号`);
         const resetType = isFirstReset ? 'FIRST' : 'SECOND';
         const results = await Promise.allSettled(enabledAccounts.map((account) => resetService.executeReset(account, false, resetType)));
-        // 统计结果
+        // 统计结果并收集详细信息
         let successCount = 0;
         let failedCount = 0;
+        let skippedCount = 0;
+        const allResults = [];
+        const failureReasons = [];
         for (const result of results) {
-            if (result.status === 'fulfilled' && result.value.status === 'SUCCESS') {
-                successCount += 1;
+            if (result.status === 'fulfilled') {
+                allResults.push(result.value);
+                if (result.value.status === 'SUCCESS') {
+                    successCount += 1;
+                }
+                else if (result.value.status === 'SKIPPED') {
+                    skippedCount += 1;
+                    // 收集跳过原因
+                    if (result.value.summary) {
+                        failureReasons.push(result.value.summary);
+                    }
+                }
+                else {
+                    failedCount += 1;
+                    // 收集失败原因
+                    if (result.value.summary) {
+                        failureReasons.push(result.value.summary);
+                    }
+                }
             }
             else {
                 failedCount += 1;
+                // Promise rejected
+                const error = result.reason;
+                const errorMsg = error instanceof Error ? error.message : String(error);
+                failureReasons.push(`执行异常: ${errorMsg}`);
             }
         }
         // 标记已执行
         await StorageService.markResetExecuted(isFirstReset);
+        // 生成通知消息
+        let notificationMessage = '';
+        if (successCount > 0 && failedCount === 0 && skippedCount === 0) {
+            // 全部成功
+            notificationMessage = `${label}重置成功：${successCount} 个账号已重置`;
+        }
+        else if (skippedCount > 0 && successCount === 0 && failedCount === 0) {
+            // 全部跳过（比如冷却中）
+            const firstReason = failureReasons[0] || '所有订阅均已跳过';
+            notificationMessage = `${label}重置跳过：${firstReason}`;
+        }
+        else if (failedCount > 0 || skippedCount > 0) {
+            // 部分成功/失败/跳过
+            const parts = [];
+            if (successCount > 0)
+                parts.push(`${successCount}成功`);
+            if (skippedCount > 0)
+                parts.push(`${skippedCount}跳过`);
+            if (failedCount > 0)
+                parts.push(`${failedCount}失败`);
+            notificationMessage = `${label}重置完成：${parts.join('，')}`;
+            // 添加第一个失败原因
+            if (failureReasons.length > 0) {
+                notificationMessage += `\n原因：${failureReasons[0]}`;
+            }
+        }
+        else {
+            notificationMessage = `${label}重置完成`;
+        }
         // 发送通知
         const preferences = await StorageService.getUserPreferences();
         if (preferences.notificationsEnabled) {
-            await this.sendNotification('定时重置完成', `${label}重置完成：${successCount} 成功，${failedCount} 失败`);
+            await this.sendNotification(successCount > 0 && failedCount === 0 && skippedCount === 0 ? '定时重置成功' : '定时重置完成', notificationMessage);
         }
-        await Logger.success('SCHEDULED_RESET', `${label}重置完成`, undefined, {
-            successCount,
-            failedCount,
-        });
+        // 记录日志
+        if (successCount > 0 && failedCount === 0 && skippedCount === 0) {
+            await Logger.success('SCHEDULED_RESET', `${label}重置成功`, undefined, {
+                successCount,
+            });
+        }
+        else {
+            await Logger.info('SCHEDULED_RESET', `${label}重置完成`, undefined, {
+                successCount,
+                failedCount,
+                skippedCount,
+                reasons: failureReasons,
+            });
+        }
     }
     /**
      * 处理心跳

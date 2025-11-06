@@ -39,6 +39,7 @@ export enum MessageType {
   UPDATE_CONFIG = 'UPDATE_CONFIG',
   CLEAR_LOGS = 'CLEAR_LOGS',
   TEST_CONNECTION = 'TEST_CONNECTION',
+  TEST_API_KEY = 'TEST_API_KEY',
 
   // 通知类
   RESET_COMPLETED = 'RESET_COMPLETED',
@@ -81,6 +82,13 @@ export interface ExecuteResetPayload extends Record<string, unknown> {
 export interface SaveAPIKeyPayload extends Record<string, unknown> {
   apiKey: string;
   accountName: string;
+}
+
+/**
+ * 测试 API 密钥 Payload
+ */
+export interface TestAPIKeyPayload extends Record<string, unknown> {
+  apiKey: string;
 }
 
 /**
@@ -138,6 +146,20 @@ export interface StatusUpdatePayload extends Record<string, unknown> {
   connected: boolean;
   lastSync?: number;
   nextScheduledReset?: number;
+}
+
+/**
+ * API Key 测试响应
+ */
+export interface APIKeyTestResponse extends Record<string, unknown> {
+  success: boolean;
+  errorType?: 'NETWORK_ERROR' | 'AUTH_ERROR' | 'PERMISSION_ERROR' | 'SERVER_ERROR' | 'UNKNOWN_ERROR';
+  message: string;
+  details?: {
+    error?: string;
+    statusCode?: number;
+    suggestion?: string;
+  };
 }
 
 /**
@@ -202,6 +224,11 @@ export type ExecuteResetMessage = Message<MessageType.EXECUTE_RESET, ExecuteRese
  * 保存 API 密钥消息
  */
 export type SaveAPIKeyMessage = Message<MessageType.SAVE_API_KEY, SaveAPIKeyPayload>;
+
+/**
+ * 测试 API 密钥消息
+ */
+export type TestAPIKeyMessage = Message<MessageType.TEST_API_KEY, TestAPIKeyPayload>;
 
 /**
  * 重置完成消息

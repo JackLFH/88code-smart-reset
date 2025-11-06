@@ -256,6 +256,14 @@ async function handleMessage(message, sender) {
                 const connected = await apiClient.testConnection(accounts[0].apiKey);
                 return createSuccessResponse({ connected });
             }
+            case 'TEST_API_KEY': {
+                const { apiKey } = message.payload;
+                if (!apiKey || apiKey.trim() === '') {
+                    return createErrorResponse('INVALID_API_KEY', 'API Key不能为空');
+                }
+                const testResult = await apiClient.testSpecificKey(apiKey.trim());
+                return createSuccessResponse(testResult);
+            }
             default:
                 return createErrorResponse('UNKNOWN_MESSAGE_TYPE', `未知消息类型: ${message.type}`);
         }

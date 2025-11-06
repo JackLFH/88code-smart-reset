@@ -1,0 +1,160 @@
+meta {
+  name: Auto Reset Credits
+  type: http
+  seq: 2
+}
+
+script:pre-request {
+  const axios = require('axios');
+
+  try {
+    // Get all subscriptions first
+    const response = await axios.post(
+      `${bru.getEnvVar('baseUrl')}/api/subscription`,
+      {},
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': bru.getEnvVar('apiKey')
+        }
+      }
+    );
+
+    const subscriptions = response.data.data;
+    console.log(`Found ${subscriptions.length} subscriptions`);
+
+    // Business logic to filter eligible subscriptions
+    const eligibleSubscriptions = subscriptions.filter(sub => {
+      // Skip PAYGO subscriptions (protection)
+      if (sub.billingType === 'PAYGO') {
+        console.log(`Skipping PAYGO subscription: ${sub.id}`);
+        return false;
+      }
+
+      // Only select MONTHLY + active subscriptions
+      if (sub.billingType !== 'MONTHLY' || sub.status !== 'active') {
+        console.log(`Skipping non-MONTHLY or inactive subscription: ${sub.id} (${sub.billingType}, ${sub.status})`);
+        return false;
+      }
+
+      // Check resetTimes >= 1
+      if (!sub.resetTimes || sub.resetTimes < 1) {
+        console.log(`Skipping subscription with no reset times: ${sub.id}`);
+        return false;
+      }
+
+      // Check cooldown period (5 hours since last reset)
+      if (sub.lastResetAt) {
+        const lastReset = new Date(sub.lastResetAt);
+        const now = new Date();
+        const hoursSinceReset = (now - lastReset) / (1000 * 60 * 60);
+
+        if (hoursSinceReset < 5) {
+          console.log(`Skipping subscription in cooldown: ${sub.id} (${hoursSinceReset.toFixed(1)}h since reset)`);
+          return false;
+        }
+      }
+
+      console.log(`Eligible subscription found: ${sub.id}`);
+      return true;
+    });
+
+    if (eligibleSubscriptions.length === 0) {
+      throw new Error('No eligible subscriptions found for credit reset');
+    }
+
+    // Select first eligible subscription
+    const selectedSubscription = eligibleSubscriptions[0];
+    console.log(`Selected subscription: ${selectedSubscription.id}`);
+
+    // Set subscriptionId as runtime variable for the request
+    bru.setVar('subscriptionId', selectedSubscription.id);
+
+    // Log selection details
+    console.log(`Selected subscription details:`, {
+      id: selectedSubscription.id,
+      billingType: selectedSubscription.billingType,
+      status: selectedSubscription.status,
+      resetTimes: selectedSubscription.resetTimes,
+      lastResetAt: selectedSubscription.lastResetAt
+    });
+
+  } catch (error) {
+    console.error('Error in pre-request script:', error.message);
+    throw new Error(`Failed to find eligible subscription: ${error.message}`);
+  }
+}
+
+post {
+  url: {{baseUrl}}/api/reset-credits/{{subscriptionId}}
+  body: json { { } }
+  headers: {
+    Content-Type: application/json
+    Authorization: {{apiKey}}
+  }
+}
+
+docs {
+  Auto Reset Credits with Business Logic
+
+  This endpoint automatically finds an eligible subscription and resets its credits.
+  The pre-request script applies intelligent business logic:
+
+  **Business Rules:**
+  1. **Protection**: Skips PAYGO subscriptions (prevents accidental usage charges)
+  2. **Filtering**: Only selects MONTHLY billing type + active status
+  3. **Reset Availability**: Requires resetTimes >= 1
+  4. **Cooldown**: 5-hour minimum interval between resets
+  5. **Selection**: Picks first eligible subscription from filtered list
+
+  **Process:**
+  1. Fetches all subscriptions via /api/subscription
+  2. Applies business logic filters
+  3. Sets subscriptionId runtime variable
+  4. Executes reset for selected subscription
+
+  Expected Response:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "subscriptionId": "selected_subscription_id",
+      "creditsReset": true,
+      "remainingResets": 2
+    }
+  }
+  ```
+
+  **Error Handling:**
+  - No eligible subscriptions: Returns descriptive error
+  - API errors: Propagates with context
+  - Missing subscriptionId: Script will throw error
+}
+
+tests {
+  test("Status code is 200", function() {
+    res.expect.status(200);
+  });
+
+  test("Response is JSON", function() {
+    res.expect.contentType("application/json");
+  });
+
+  test("Response has success field", function() {
+    const body = res.expect.json();
+    expect(body).to.have.property('success');
+    expect(body.success).to.be.true;
+  });
+
+  test("Response includes subscription data", function() {
+    const body = res.expect.json();
+    expect(body).to.have.property('data');
+    expect(body.data).to.have.property('subscriptionId');
+  });
+
+  test("Credits were reset successfully", function() {
+    const body = res.expect.json();
+    expect(body.data).to.have.property('creditsReset');
+    expect(body.data.creditsReset).to.be.true;
+  });
+}

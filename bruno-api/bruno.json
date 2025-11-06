@@ -1,0 +1,6 @@
+{
+  "version": "1",
+  "name": "88code Smart Reset API",
+  "type": "collection",
+  "ignore": ["node_modules", ".git"]
+}

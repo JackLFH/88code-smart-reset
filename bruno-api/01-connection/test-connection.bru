@@ -1,0 +1,48 @@
+meta {
+  name: Test Connection
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/usage
+  body: json { { } }
+  headers: {
+    Content-Type: application/json
+    Authorization: {{apiKey}}
+  }
+}
+
+docs {
+  Test connection to 88code API and get usage information
+
+  This endpoint verifies your API key is valid and returns current usage statistics.
+
+  Expected Response:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "usage": "usage_stats_here"
+    }
+  }
+  ```
+}
+
+tests {
+  // Test for successful response
+  test("Status code is 200", function() {
+    res.expect.status(200);
+  });
+
+  // Test for JSON response
+  test("Response is JSON", function() {
+    res.expect.contentType("application/json");
+  });
+
+  // Test for success field
+  test("Response has success field", function() {
+    const body = res.expect.json();
+    expect(body).to.have.property('success');
+  });
+}
