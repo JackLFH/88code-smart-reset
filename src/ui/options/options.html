@@ -32,29 +32,28 @@
           <div class="flip-card-inner">
             <div class="flip-card-front">
               <div class="card-title">
-                <span>API</span>
+                <span>配置管理</span>
                 <span>01</span>
               </div>
               <div class="card-emoji">🔑</div>
               <div class="card-title">
                 <span>01</span>
-                <span>配置</span>
+                <span>设置</span>
               </div>
             </div>
             <div class="flip-card-back">
               <div class="card-title">
-                <span>API</span>
+                <span>配置管理</span>
                 <span>01</span>
               </div>
               <div class="card-copy">
-                <p>账号管理</p>
-                <p>密钥配置</p>
-                <p>连接测试</p>
-                <p>启用控制</p>
+                <p>👤 账号管理</p>
+                <p>🔐 密钥配置</p>
+                <p>🔗 连接测试</p>
+                <p>⚙️ 启用控制</p>
               </div>
-              <div class="card-title">
-                <span>01</span>
-                <span>配置</span>
+              <div class="card-action">
+                <span>设置</span>
               </div>
             </div>
           </div>
@@ -66,7 +65,7 @@
           <div class="flip-card-inner">
             <div class="flip-card-front">
               <div class="card-title">
-                <span>定时</span>
+                <span>定时任务</span>
                 <span>02</span>
               </div>
               <div class="card-emoji">⏰</div>
@@ -77,17 +76,16 @@
             </div>
             <div class="flip-card-back">
               <div class="card-title">
-                <span>定时</span>
+                <span>定时任务</span>
                 <span>02</span>
               </div>
               <div class="card-copy">
-                <p>重置时间</p>
-                <p>自动执行</p>
-                <p>通知提醒</p>
-                <p>时区配置</p>
+                <p>⏰ 重置时间</p>
+                <p>🚀 自动执行</p>
+                <p>🔔 通知提醒</p>
+                <p>🌍 时区配置</p>
               </div>
-              <div class="card-title">
-                <span>02</span>
+              <div class="card-action">
                 <span>设置</span>
               </div>
             </div>
@@ -100,29 +98,28 @@
           <div class="flip-card-inner">
             <div class="flip-card-front">
               <div class="card-title">
-                <span>日志</span>
+                <span>日志记录</span>
                 <span>03</span>
               </div>
               <div class="card-emoji">📋</div>
               <div class="card-title">
                 <span>03</span>
-                <span>记录</span>
+                <span>设置</span>
               </div>
             </div>
             <div class="flip-card-back">
               <div class="card-title">
-                <span>日志</span>
+                <span>日志记录</span>
                 <span>03</span>
               </div>
               <div class="card-copy">
-                <p>操作记录</p>
-                <p>错误追踪</p>
-                <p>状态监控</p>
-                <p>历史查询</p>
+                <p>📝 操作记录</p>
+                <p>🐛 错误追踪</p>
+                <p>📊 状态监控</p>
+                <p>🔍 历史查询</p>
               </div>
-              <div class="card-title">
-                <span>03</span>
-                <span>记录</span>
+              <div class="card-action">
+                <span>设置</span>
               </div>
             </div>
           </div>
@@ -135,44 +132,43 @@
   <main class="main">
       <!-- API 配置 Tab -->
       <section class="tab-content active" id="apiTab">
-        <h2 class="tab-title">API 配置</h2>
-        <p class="tab-description">配置你的 88code API 密钥以开始使用</p>
+        <h2 class="tab-title">配置管理</h2>
+        <p class="tab-description">使用你的 88code API KEY 创建配置以开始使用</p>
 
         <form class="form" id="apiForm">
           <div class="form-group">
-            <label class="form-label" for="accountName">账号名称</label>
+            <label class="form-label" for="accountName">配置名称</label>
             <input
               type="text"
               id="accountName"
               class="form-input"
-              placeholder="我的主账号"
+              placeholder="请为你的配置起个名字"
               required
             />
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="apiKey">API 密钥</label>
+            <label class="form-label" for="apiKey">API KEY</label>
             <input
               type="password"
               id="apiKey"
               class="form-input"
-              placeholder="输入你的 API 密钥"
+              placeholder="请输入你的 API KEY"
               required
             />
-            <p class="form-hint">你的 API 密钥将被加密存储</p>
+            <p class="form-hint">你的 API KEY 仅在本地被加密存储，不会上传到任何服务器</p>
           </div>
 
           <div class="form-actions">
-            <button type="submit" class="btn btn-primary">保存配置</button>
-            <button type="button" class="btn btn-secondary" id="testConnectionBtn">测试连接</button>
+            <button type="submit" class="btn btn-primary" id="saveConfigBtn">保存配置</button>
           </div>
         </form>
 
         <div class="alert hidden" id="apiAlert"></div>
 
-        <!-- 账号列表 -->
+        <!-- 配置列表 -->
         <div class="account-list-section">
-          <h3 class="section-title">已添加的账号</h3>
+          <h3 class="section-title">已添加的配置</h3>
           <div class="account-list" id="accountList">
             <div class="account-list-loading">加载中...</div>
           </div>
@@ -181,8 +177,8 @@
 
       <!-- 定时设置 Tab -->
       <section class="tab-content" id="scheduleTab">
-        <h2 class="tab-title">定时设置</h2>
-        <p class="tab-description">配置自动重置的时间</p>
+        <h2 class="tab-title">定时任务</h2>
+        <p class="tab-description">设置自动重置的定时任务计划</p>
 
         <form class="form" id="scheduleForm">
           <div class="form-group">

@@ -317,6 +317,17 @@ async function handleMessage(
         return createSuccessResponse({ connected });
       }
 
+      case 'TEST_API_KEY': {
+        const { apiKey } = message.payload as { apiKey: string };
+
+        if (!apiKey || apiKey.trim() === '') {
+          return createErrorResponse('INVALID_API_KEY', 'API Key不能为空');
+        }
+
+        const testResult = await apiClient.testSpecificKey(apiKey.trim());
+        return createSuccessResponse(testResult);
+      }
+
       default:
         return createErrorResponse('UNKNOWN_MESSAGE_TYPE', `未知消息类型: ${message.type}`);
     }

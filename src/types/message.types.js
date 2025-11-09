@@ -22,6 +22,7 @@ export var MessageType;
     MessageType["UPDATE_CONFIG"] = "UPDATE_CONFIG";
     MessageType["CLEAR_LOGS"] = "CLEAR_LOGS";
     MessageType["TEST_CONNECTION"] = "TEST_CONNECTION";
+    MessageType["TEST_API_KEY"] = "TEST_API_KEY";
     // 通知类
     MessageType["RESET_COMPLETED"] = "RESET_COMPLETED";
     MessageType["RESET_FAILED"] = "RESET_FAILED";

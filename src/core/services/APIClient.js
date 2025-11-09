@@ -394,6 +394,127 @@ export class APIClient {
         }
     }
     /**
+     * 测试特定API Key并返回详细结果
+     * @param apiKey API 密钥
+     * @returns 详细测试结果
+     */
+    async testSpecificKey(apiKey) {
+        try {
+            await Logger.info('API_KEY_TEST_START', '开始测试API Key', undefined, {
+                apiKeyPrefix: apiKey.slice(0, 8) + '...',
+            });
+            // 尝试调用使用情况API
+            const usage = await this.getUsage(apiKey);
+            await Logger.success('API_KEY_TEST_SUCCESS', 'API Key测试成功', undefined, {
+                currentCredits: usage.currentCredits,
+                creditLimit: usage.creditLimit,
+                subscriptionCount: usage.subscriptionEntityList?.length || 0,
+            });
+            return {
+                success: true,
+                message: '连接成功！',
+                details: {
+                    suggestion: 'API Key有效，可以保存配置',
+                },
+            };
+        }
+        catch (error) {
+            await Logger.error('API_KEY_TEST_FAILED', 'API Key测试失败', undefined, {
+                errorName: error instanceof Error ? error.name : 'Unknown',
+                errorMessage: error instanceof Error ? error.message : String(error),
+                errorType: error instanceof Error ? error.constructor.name : typeof error,
+            });
+            // 分析错误类型并提供具体建议
+            const errorObj = error;
+            const statusCode = errorObj?.details?.statusCode;
+            const errorCode = errorObj?.code;
+            if (error instanceof Error && error.name === 'AbortError') {
+                return {
+                    success: false,
+                    errorType: 'NETWORK_ERROR',
+                    message: '连接超时',
+                    details: {
+                        error: '请求超时（30秒）',
+                        suggestion: '请检查网络连接，或稍后重试',
+                    },
+                };
+            }
+            if (error instanceof Error && error.message.includes('fetch')) {
+                return {
+                    success: false,
+                    errorType: 'NETWORK_ERROR',
+                    message: '网络连接失败',
+                    details: {
+                        error: error.message,
+                        suggestion: '请检查网络连接或防火墙设置',
+                    },
+                };
+            }
+            // 根据HTTP状态码判断错误类型
+            if (statusCode) {
+                if (statusCode === 401) {
+                    return {
+                        success: false,
+                        errorType: 'AUTH_ERROR',
+                        message: 'API Key无效或已过期',
+                        details: {
+                            statusCode,
+                            error: '认证失败',
+                            suggestion: '请检查API Key是否正确，或登录88code.org重新获取',
+                        },
+                    };
+                }
+                if (statusCode === 403) {
+                    return {
+                        success: false,
+                        errorType: 'PERMISSION_ERROR',
+                        message: 'API Key权限不足',
+                        details: {
+                            statusCode,
+                            error: '权限被拒绝',
+                            suggestion: '请确保API Key具有查询使用情况的权限',
+                        },
+                    };
+                }
+                if (statusCode >= 500) {
+                    return {
+                        success: false,
+                        errorType: 'SERVER_ERROR',
+                        message: '服务器错误',
+                        details: {
+                            statusCode,
+                            error: `服务器返回${statusCode}错误`,
+                            suggestion: '请稍后重试，或联系88code技术支持',
+                        },
+                    };
+                }
+            }
+            // 根据错误代码判断
+            if (errorCode) {
+                if (errorCode.includes('RATE_LIMIT')) {
+                    return {
+                        success: false,
+                        errorType: 'NETWORK_ERROR',
+                        message: '请求过于频繁',
+                        details: {
+                            error: '触发速率限制',
+                            suggestion: '请稍等片刻再试',
+                        },
+                    };
+                }
+            }
+            return {
+                success: false,
+                errorType: 'UNKNOWN_ERROR',
+                message: '未知错误',
+                details: {
+                    error: error instanceof Error ? error.message : String(error),
+                    suggestion: '请检查API Key配置，或联系技术支持',
+                },
+            };
+        }
+    }
+    /**
      * 获取速率限制状态
      */
     getRateLimitStatus() {
