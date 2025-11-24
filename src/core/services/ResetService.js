@@ -293,18 +293,32 @@ export class ResetService {
                     duration: Date.now() - resetStart,
                 };
             }
-            // 验证重置成功（根据API返回的data字段）
-            const newCredits = response.data?.newCredits ?? usageBefore;
-            const resetSuccessful = response.success && response.data !== undefined;
+            // 验证重置成功
+            // 注意：88code API在成功时可能返回空响应，此时response.data可能为undefined
+            // 只要response.success为true，就认为重置成功
+            const resetSuccessful = response.success;
+            // 获取新的积分数（如果API返回了data，使用data.newCredits；否则无法获取）
+            const newCredits = response.data?.newCredits;
+            const resetAt = response.data?.resetAt;
+            let message;
+            if (resetSuccessful) {
+                if (newCredits !== undefined) {
+                    message = `成功重置（${usageBefore.toFixed(2)} → ${newCredits.toFixed(2)} Credits${resetAt ? `，重置时间：${resetAt}` : ''}）`;
+                }
+                else {
+                    message = `成功重置（服务器未返回详细数据）`;
+                }
+            }
+            else {
+                message = '重置失败';
+            }
             return {
                 subscriptionId,
                 plan: 'MONTHLY',
                 status: resetSuccessful ? 'SUCCESS' : 'FAILED',
-                message: resetSuccessful
-                    ? `成功重置（${usageBefore.toFixed(2)} → ${newCredits.toFixed(2)} Credits，重置时间：${response.data?.resetAt}）`
-                    : '重置未返回数据',
+                message,
                 usageBefore,
-                usageAfter: newCredits,
+                usageAfter: newCredits ?? usageBefore, // 如果没有新数据，保持原值
                 duration: Date.now() - resetStart,
             };
         }

@@ -38,6 +38,10 @@ export declare class APIClient {
      */
     getSubscriptions(apiKey: string): Promise<Subscription[]>;
     /**
+     * 适配多种订阅响应格式，确保返回数组
+     */
+    private normalizeSubscriptionsResponse;
+    /**
      * 获取使用情况
      * @param apiKey API 密钥
      * @returns 使用情况
@@ -50,6 +54,14 @@ export declare class APIClient {
      * @returns 重置响应
      */
     resetCredits(apiKey: string, subscriptionId: string): Promise<ResetResponse>;
+    /**
+     * 适配使用情况接口的多种返回格式
+     */
+    private normalizeUsageResponse;
+    /**
+     * 适配重置接口的多种返回格式
+     */
+    private normalizeResetResponse;
     /**
      * 测试连接
      * @param apiKey API 密钥

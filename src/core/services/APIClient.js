@@ -328,8 +328,68 @@ export class APIClient {
     async getSubscriptions(apiKey) {
         await Logger.info('API_CALL', '获取订阅列表');
         const response = await this.request('POST', '/api/subscription', apiKey);
-        await Logger.success('API_CALL', `获取到 ${response.length} 个订阅`);
-        return response;
+        try {
+            const subscriptions = this.normalizeSubscriptionsResponse(response);
+            await Logger.success('API_CALL', `获取到 ${subscriptions.length} 个订阅`, undefined, {
+                responseShape: Array.isArray(response) ? 'array' : typeof response,
+            });
+            return subscriptions;
+        }
+        catch (error) {
+            await Logger.error('API_SUBSCRIPTION_PARSE_FAILED', '订阅接口响应格式解析失败', undefined, {
+                error: error instanceof Error ? error.message : String(error),
+                rawType: typeof response,
+                rawKeys: response && typeof response === 'object' ? Object.keys(response) : [],
+                rawPreview: (() => {
+                    try {
+                        return JSON.stringify(response).slice(0, 500);
+                    }
+                    catch {
+                        return String(response);
+                    }
+                })(),
+            });
+            throw error;
+        }
+    }
+    /**
+     * 适配多种订阅响应格式，确保返回数组
+     */
+    normalizeSubscriptionsResponse(response) {
+        const candidates = [
+            { value: response, path: 'root' },
+            { value: response?.data, path: 'data' },
+            { value: response?.data?.subscriptions, path: 'data.subscriptions' },
+            { value: response?.data?.subscriptionList, path: 'data.subscriptionList' },
+            { value: response?.data?.subscriptionEntityList, path: 'data.subscriptionEntityList' },
+            { value: response?.data?.list, path: 'data.list' },
+            { value: response?.data?.items, path: 'data.items' },
+            { value: response?.subscriptions, path: 'subscriptions' },
+            { value: response?.subscriptionList, path: 'subscriptionList' },
+            { value: response?.subscriptionEntityList, path: 'subscriptionEntityList' },
+            { value: response?.list, path: 'list' },
+            { value: response?.items, path: 'items' },
+            { value: response?.records, path: 'records' },
+            { value: response?.result, path: 'result' },
+        ];
+        for (const candidate of candidates) {
+            if (Array.isArray(candidate.value)) {
+                // 找到数组，直接返回
+                return candidate.value;
+            }
+        }
+        const keys = response && typeof response === 'object' ? Object.keys(response) : [];
+        throw createError('INVALID_SUBSCRIPTION_RESPONSE', '订阅接口返回格式已变更，无法解析订阅列表', {
+            keys,
+            sample: (() => {
+                try {
+                    return JSON.stringify(response).slice(0, 500);
+                }
+                catch {
+                    return String(response);
+                }
+            })(),
+        });
     }
     /**
      * 获取使用情况
@@ -338,10 +398,31 @@ export class APIClient {
      */
     async getUsage(apiKey) {
         await Logger.info('API_CALL', '获取使用情况');
-        const response = await this.request('POST', '/api/usage', apiKey);
+        const rawResponse = await this.request('POST', '/api/usage', apiKey);
+        let response;
+        try {
+            response = this.normalizeUsageResponse(rawResponse);
+        }
+        catch (error) {
+            await Logger.error('API_USAGE_PARSE_FAILED', '使用情况接口响应格式解析失败', undefined, {
+                error: error instanceof Error ? error.message : String(error),
+                rawType: typeof rawResponse,
+                rawKeys: rawResponse && typeof rawResponse === 'object' ? Object.keys(rawResponse) : [],
+                rawPreview: (() => {
+                    try {
+                        return JSON.stringify(rawResponse).slice(0, 500);
+                    }
+                    catch {
+                        return String(rawResponse);
+                    }
+                })(),
+            });
+            throw error;
+        }
         // 🔍 调试：查看getUsage返回的原始响应
         console.log('[DEBUG] APIClient.getUsage 返回的原始响应:', {
-            response,
+            rawResponse,
+            normalized: response,
             currentCredits: response.currentCredits,
             creditLimit: response.creditLimit,
             hasCurrentCredits: 'currentCredits' in response,
@@ -360,24 +441,141 @@ export class APIClient {
      */
     async resetCredits(apiKey, subscriptionId) {
         await Logger.info('API_CALL', `重置积分: ${subscriptionId}`);
-        const response = await this.request('POST', `/api/reset-credits/${subscriptionId}`, apiKey);
+        const rawResponse = await this.request('POST', `/api/reset-credits/${subscriptionId}`, apiKey);
+        const response = this.normalizeResetResponse(rawResponse);
         // 🔍 详细调试日志 - 查看实际返回的响应对象
         console.log('[DEBUG] resetCredits 收到响应:', {
-            response,
+            rawResponse,
+            normalized: response,
             success: response.success,
             message: response.message,
             typeof_success: typeof response.success,
             typeof_message: typeof response.message,
-            keys: Object.keys(response),
-            json: JSON.stringify(response),
+            keys: rawResponse && typeof rawResponse === 'object' ? Object.keys(rawResponse) : [],
+            json: (() => {
+                try {
+                    return JSON.stringify(rawResponse);
+                }
+                catch {
+                    return String(rawResponse);
+                }
+            })(),
         });
         if (response.success) {
-            await Logger.success('API_CALL', `积分重置成功: ${subscriptionId}`);
+            await Logger.success('API_CALL', `积分重置成功: ${subscriptionId}`, undefined, {
+                message: response.message,
+            });
         }
         else {
-            await Logger.warning('API_CALL', `积分重置失败: ${response.message}`);
+            await Logger.warning('API_CALL', `积分重置失败: ${response.message}`, undefined, {
+                message: response.message,
+                error: response.error,
+            });
         }
         return response;
+    }
+    /**
+     * 适配使用情况接口的多种返回格式
+     */
+    normalizeUsageResponse(raw) {
+        const candidates = [
+            { value: raw, path: 'root' },
+            { value: raw?.data, path: 'data' },
+            { value: raw?.data?.data, path: 'data.data' },
+            { value: raw?.result, path: 'result' },
+            { value: raw?.payload, path: 'payload' },
+            { value: raw?.usage, path: 'usage' },
+            { value: raw?.data?.usage, path: 'data.usage' },
+        ];
+        const hasUsageShape = (obj) => obj &&
+            typeof obj === 'object' &&
+            ('currentCredits' in obj ||
+                'creditLimit' in obj ||
+                'remainingCredits' in obj ||
+                'availableCredits' in obj ||
+                'subscriptionEntityList' in obj);
+        const firstHit = candidates.find((c) => hasUsageShape(c.value));
+        const usageObj = firstHit?.value ?? raw;
+        if (!hasUsageShape(usageObj)) {
+            throw createError('INVALID_USAGE_RESPONSE', '使用情况接口返回格式已变更，无法解析', {
+                keys: usageObj && typeof usageObj === 'object' ? Object.keys(usageObj) : [],
+                sample: (() => {
+                    try {
+                        return JSON.stringify(usageObj).slice(0, 500);
+                    }
+                    catch {
+                        return String(usageObj);
+                    }
+                })(),
+            });
+        }
+        const toNumber = (val) => {
+            if (typeof val === 'number' && Number.isFinite(val))
+                return val;
+            if (typeof val === 'string') {
+                const n = Number(val);
+                return Number.isFinite(n) ? n : 0;
+            }
+            return 0;
+        };
+        const currentCredits = toNumber(usageObj.currentCredits ?? usageObj.remainingCredits ?? usageObj.availableCredits ?? usageObj.credits);
+        const creditLimit = toNumber(usageObj.creditLimit ?? usageObj.totalCredits ?? usageObj.quota ?? usageObj.limit);
+        const subscriptionEntityList = Array.isArray(usageObj.subscriptionEntityList)
+            ? usageObj.subscriptionEntityList
+            : Array.isArray(usageObj.subscriptions)
+                ? usageObj.subscriptions
+                : Array.isArray(usageObj.data?.subscriptions)
+                    ? usageObj.data.subscriptions
+                    : [];
+        const normalized = {
+            id: usageObj.id ?? 0,
+            keyId: usageObj.keyId ?? '',
+            name: usageObj.name ?? '',
+            employeeId: usageObj.employeeId ?? 0,
+            subscriptionId: usageObj.subscriptionId ?? usageObj.id ?? 0,
+            subscriptionName: usageObj.subscriptionName ?? '',
+            currentCredits,
+            creditLimit,
+            subscriptionEntityList,
+            createdAt: usageObj.createdAt ?? '',
+            updatedAt: usageObj.updatedAt ?? '',
+        };
+        return normalized;
+    }
+    /**
+     * 适配重置接口的多种返回格式
+     */
+    normalizeResetResponse(raw) {
+        const obj = (raw ?? {});
+        const rawSuccess = obj['success'];
+        const code = typeof obj['code'] === 'number' ? obj['code'] : undefined;
+        const statusCode = typeof obj['statusCode'] === 'number' ? obj['statusCode'] : undefined;
+        const status = typeof obj['status'] === 'number' ? obj['status'] : undefined;
+        const message = (typeof obj['message'] === 'string' && obj['message']) ||
+            (typeof obj?.msg === 'string' && obj.msg) ||
+            '重置失败';
+        const data = obj['data'] ||
+            obj['result'] ||
+            obj['payload'];
+        // 判定成功：显式 success=true 或 code/status/statusCode 为成功值，或存在 data 但无错误
+        const success = rawSuccess === true ||
+            code === 0 ||
+            statusCode === 200 ||
+            status === 200 ||
+            status === 201 ||
+            (rawSuccess === undefined && code === undefined && statusCode === undefined && status === undefined && !!data);
+        const error = obj['error'] ||
+            (typeof code === 'number' && code !== 0 && code !== 200 && code !== 201
+                ? { code, message: message || '重置失败', type: 'API_CODE_NON_ZERO' }
+                : undefined);
+        // 如果 success 仍然无法判定且没有 data，则认为失败
+        const finalSuccess = success === true;
+        return {
+            success: finalSuccess,
+            message: finalSuccess ? message || '重置成功' : message || '重置失败',
+            data,
+            error: finalSuccess ? undefined : error,
+        };
     }
     /**
      * 测试连接
